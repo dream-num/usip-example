@@ -27,7 +27,7 @@ def get_userinfo_param(request: Request) -> list[str]:
     user_ids = []
     for u in query.split("&"):
         (key, v) = u.split("=")
-        if key == "userID":
+        if key == "userIDs":
             user_ids.append(v)
     return user_ids
 
@@ -61,7 +61,7 @@ def get_members_by_unit_ids_param(request: Request) -> list[str]:
     unit_ids = []
     for u in query.split("&"):
         (key, v) = u.split("=")
-        if key == "unitID":
+        if key == "unitIDs":
             unit_ids.append(v)
     return unit_ids
 
