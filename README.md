@@ -1,6 +1,6 @@
 # usip-example
 
-- [go](./go-usip/README.md)
-- [python](./python-usip/README.md)
+- [go](./go-usip/)
+- [python](./python-usip/)
 - [nodejs](./nodejs-usip/)
 - [rust](./rust-usip/)
