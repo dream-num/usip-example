@@ -1,6 +1,6 @@
 # python usip example
 
-use `fastapi` to apply web server.
+use [`fastapi`](https://fastapi.tiangolo.com/) to apply web server.
 
 ## run
 
