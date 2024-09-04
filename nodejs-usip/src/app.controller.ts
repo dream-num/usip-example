@@ -1,5 +1,5 @@
-import { Controller, Get, Req, Headers, Query } from '@nestjs/common';
-import { AppService, ParseArrayPipe } from './app.service';
+import { Controller, Get, Headers, Query, Post, Body } from '@nestjs/common';
+import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
@@ -20,8 +20,8 @@ export class AppController {
     return {user: user.normalize()};
   }
 
-  @Get('userinfo')
-  batchGetUserInfo(@Query("userIDs", new ParseArrayPipe()) userIds: string[]): any {
+  @Post('userinfo')
+  batchGetUserInfo(@Body("userIDs") userIds: string[]): any {
     let users = [];
     for (let userId of userIds) {
       let user = this.appService.getUser(userId);
@@ -41,8 +41,8 @@ export class AppController {
     return member.normalize();
   }
 
-  @Get("collaborators")
-  getCollaborators(@Query("unitIDs", new ParseArrayPipe()) unitIds: string[]): any {
+  @Post("collaborators")
+  getCollaborators(@Body("unitIDs") unitIds: string[]): any {
     let result = {"collaborators": []};
     for (let unitId of unitIds) {
       let unitCollaborator = {unitID: unitId, subjects: []};

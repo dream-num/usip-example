@@ -41,8 +41,13 @@ func BatchGetUserInfo(w http.ResponseWriter, r *http.Request) {
 		Users []*User `json:"users"`
 	}
 
-	_ = r.ParseForm()
-	userIDs := r.Form["userIDs"]
+	// use post body
+	var req struct {
+		UserIDs []string `json:"userIDs"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&req)
+	userIDs := req.UserIDs
+
 	result := response{}
 	for _, userID := range userIDs {
 		if u, ok := Users[userID]; ok {
@@ -73,8 +78,13 @@ func BatchGetCollaborators(w http.ResponseWriter, r *http.Request) {
 		} `json:"collaborators"`
 	}
 
-	_ = r.ParseForm()
-	unitIDs := r.Form["unitIDs"]
+	// use post body
+	var req struct {
+		UnitIDs []string `json:"unitIDs"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&req)
+	unitIDs := req.UnitIDs
+
 	result := response{}
 	for _, unitID := range unitIDs {
 		if cs, ok := UnitCollaborators[unitID]; ok {

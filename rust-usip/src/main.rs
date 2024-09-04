@@ -2,7 +2,8 @@
 
 use rocket::Request;
 use rocket::request::{self, FromRequest};
-use rocket::serde::json::{json, Value};
+use rocket::serde::json::{json, Value, Json};
+use rocket::serde::{Deserialize, Serialize};
 
 mod data;
 
@@ -57,35 +58,22 @@ fn verify_credential(header: Headers) -> Value {
 }
 
 
-#[derive(Debug)]
-struct GetUserinfoParam {
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
+struct UserInfoParam {
+    #[serde(alias = "userIDs")]
     user_ids: Vec<String>,
 }
 
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for GetUserinfoParam {
-    type Error = ();
-
-    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        let query = req.query_value::<Vec<String>>("userIDs");
-        let user_ids = match query {
-            Some(u) => u.unwrap(),
-            _none => Vec::new(),
-        };
-
-        request::Outcome::Success(GetUserinfoParam { user_ids })
-    }
-}
-
-#[get("/userinfo")]
-fn batch_get_userinfo(query: GetUserinfoParam) -> Value {
+#[post("/userinfo", format = "json", data = "<p>")]
+fn batch_get_userinfo(p: Json<UserInfoParam>) -> Value {
     // println!("{:?}", query.user_ids);
-    if query.user_ids.is_empty() {
+    if p.user_ids.is_empty() {
         return json!({"error": "userIDs is required"})
     }
 
     let mut users = Vec::new();
-    for user_id in query.user_ids.iter() {
+    for user_id in p.user_ids.iter() {
         let user = data::get_user(user_id);
         match user {
             Some(u) => users.push(json!({
@@ -143,36 +131,21 @@ fn get_role(query: GetRoleParam) -> Value {
     }
 }
 
-#[derive(Debug)]
-struct GetCollaboratorsParam {
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
+struct CollaboratorsParam {
+    #[serde(alias = "unitIDs")]
     unit_ids: Vec<String>,
 }
 
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for GetCollaboratorsParam {
-    type Error = ();
-
-    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        let unit_ids = req.query_value::<Vec<String>>("unitIDs");
-        match unit_ids {
-            Some(u) => request::Outcome::Success(GetCollaboratorsParam {
-                unit_ids: u.unwrap(),
-            }),
-            _ => request::Outcome::Success(GetCollaboratorsParam {
-                unit_ids: Vec::new(),
-            })
-        }
-    }
-}
-
-#[get("/collaborators")]
-fn get_collaborators(query: GetCollaboratorsParam) -> Value {
+#[post("/collaborators", format = "json", data = "<p>")]
+fn get_collaborators(p: Json<CollaboratorsParam>) -> Value {
     // println!("{:?}", query.unit_ids);
-    if query.unit_ids.is_empty() {
+    if p.unit_ids.is_empty() {
         return json!({"error": "unitIDs is required"})
     }
     let mut collaborators = Vec::new();
-    for unit_id in query.unit_ids.iter() {
+    for unit_id in p.unit_ids.iter() {
         let members = data::get_members(unit_id);
         let mut unit_collaborators = Vec::new();
         for member in members.iter() {

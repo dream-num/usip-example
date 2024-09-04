@@ -1,6 +1,7 @@
 from typing import Annotated
 
-from fastapi import FastAPI, Header, Request, Depends, Query
+from fastapi import FastAPI, Header, Query
+from pydantic import BaseModel, Field
 
 from data import verify_token, get_user, get_members, get_role, Member
 
@@ -22,22 +23,16 @@ def verify_credential(
     return {"user": user.normalize()}
 
 
-def get_userinfo_param(request: Request) -> list[str]:
-    query = request.url.query
-    user_ids = []
-    for u in query.split("&"):
-        (key, v) = u.split("=")
-        if key == "userIDs":
-            user_ids.append(v)
-    return user_ids
+class UserinfoRequest(BaseModel):
+    user_ids: list[str] = Field(alias="userIDs")
 
 
-@app.get("/userinfo")
+@app.post("/userinfo")
 def batch_get_userinfo(
-    user_ids: list[str] = Depends(get_userinfo_param)
+    p: UserinfoRequest,
 ):
     users = []
-    for user_id in user_ids:
+    for user_id in p.user_ids:
         user = get_user(user_id)
         if user is not None:
             users.append(user.normalize())
@@ -56,22 +51,16 @@ def get_unit_role(
     return member.normalize()
 
 
-def get_members_by_unit_ids_param(request: Request) -> list[str]:
-    query = request.url.query
-    unit_ids = []
-    for u in query.split("&"):
-        (key, v) = u.split("=")
-        if key == "unitIDs":
-            unit_ids.append(v)
-    return unit_ids
+class CollaboratorsRequest(BaseModel):
+    unit_ids: list[str] = Field(alias="unitIDs")
 
 
-@app.get("/collaborators")
+@app.post("/collaborators")
 def get_members_by_unit_ids(
-    unit_ids: list[str] = Depends(get_members_by_unit_ids_param)
+    p: CollaboratorsRequest,
 ):
     members_map: dict[str, list[Member]] = {}
-    for unit_id in unit_ids:
+    for unit_id in p.unit_ids:
         members_map[unit_id] = get_members(unit_id)
     
     collaborators = []

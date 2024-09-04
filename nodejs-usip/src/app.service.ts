@@ -1,4 +1,4 @@
-import { PipeTransform, Injectable, ArgumentMetadata, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 export class User {
   constructor(
@@ -92,18 +92,5 @@ export class AppService {
       }
     }
     return members;
-  }
-}
-
-@Injectable()
-export class ParseArrayPipe implements PipeTransform {
-  transform(value: any, metadata: ArgumentMetadata) {
-    if (!value) {
-      return [];
-    }
-    if (Array.isArray(value)) {
-      return value;
-    }
-    return [value];
   }
 }
