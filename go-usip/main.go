@@ -21,7 +21,7 @@ func main() {
 const (
 	RoleOwner  = "owner"
 	RoleEditor = "editor"
-	RoleViewer = "viewer"
+	RoleReader = "reader"
 )
 
 type User struct {

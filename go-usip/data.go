@@ -14,7 +14,7 @@ var (
 		},
 		"unit2": {
 			{UserID: "2", Role: RoleOwner},
-			{UserID: "3", Role: RoleViewer},
+			{UserID: "3", Role: RoleReader},
 		},
 		"unit3": {
 			{UserID: "3", Role: RoleOwner},
