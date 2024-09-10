@@ -1,0 +1,96 @@
+<html>
+  <head>
+    <title>Import</title>
+    <script>
+      async function importByLocal() {
+        let file = document.getElementById("local").files[0];
+        let data = new FormData();
+        data.append("file", file);
+
+        await importSheet(data, file.size);
+      }
+
+      async function importByURL() {
+        let url = document.getElementById("url").value;
+        let sheet = await fetch(url);
+        let blob = await sheet.blob();
+        let data = new FormData();
+        data.append("file", blob, "a.xlsx");
+
+        await importSheet(data, blob.size);
+      }
+
+      async function importSheet(data, size) {
+        let upload = await fetch(
+          "http://localhost:8000/universer-api/stream/file/upload?size=" + size,
+          {
+            method: "POST",
+            body: data,
+          }
+        );
+
+        // import to universer
+        let uploadResult = await upload.json();
+        let imp = await fetch(
+          "http://localhost:8000/universer-api/exchange/2/import",
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              outputType: 1,
+              fileID: uploadResult.FileId,
+            }),
+          }
+        );
+
+        // get task status
+        let impResult = await imp.json();
+        let finished = false;
+        for (let i = 0; i < 10; i++) {
+          setTimeout(async () => {
+            if (finished) return;
+            let task = await fetch(
+              "http://localhost:8000/universer-api/exchange/task/" +
+                impResult.taskID
+            );
+            let taskResult = await task.json();
+            switch (taskResult.status) {
+              case "pending":
+                break;
+              case "done":
+                console.log(taskResult);
+                finished = true;
+                alert("import success");
+                break;
+              case "failed":
+                console.log("error");
+                finished = true;
+                alert("import failed");
+                break;
+            }
+          }, 1000 * i);
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div>
+      import demo
+      <p>1. download file from url</p>
+      <p>
+        <input
+          id="url"
+          type="text"
+          value="https://release-univer.oss-cn-shenzhen.aliyuncs.com/_0224xlsx/Activity%20costs%20tracker.xlsx"
+        />
+        <button onclick="importByURL()">test</button>
+      </p>
+      <hr />
+      <p>2. get file in local</p>
+      <p>
+        <input id="local" type="file" />
+        <button onclick="importByLocal()">test</button>
+      </p>
+    </div>
+  </body>
+</html>
