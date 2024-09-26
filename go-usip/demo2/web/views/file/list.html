@@ -1,0 +1,36 @@
+<p><button id="new-btn">New File</button></p>
+<form id="new-form" action="/file/new" method="post" enctype="multipart/form-data" style="visibility: hidden;">
+  <label><b>Name</b></label>
+  <input type="text" placeholder="Enter Name" name="name" required>
+
+  <label><b>Type</b></label>
+  <input type="radio" name="type" value="doc" checked>
+  <label>doc</label>
+
+  <input type="radio" name="type" value="sheet" checked>
+  <label>sheet</label>
+
+  <button type="submit">new</button>
+</form>
+
+<p>File list: <button id="logout-btn" style="width: 100px; position: absolute; right: 20px; padding: 0px 20px 0px 20px; height: 30px; margin: 0;">Logout</button></p>
+<hr/>
+{{ range .Files }}
+<p>
+  {{ if (eq .UnitType 1) }}
+    <a href="{{$.DocHost}}/?unit={{.UnitId}}&type=1">{{.Name}}.docx</a>
+  {{ else if (eq .UnitType 2) }}
+    <a href="{{$.SheetHost}}/?unit={{.UnitId}}&type=2">{{.Name}}.xlsx</a>
+  {{ end }}
+</p>
+{{ end }}
+
+<script type="text/javascript">
+  document.getElementById("new-btn").addEventListener('click', function() {
+    document.getElementById('new-form').style.visibility = 'visible';
+  });
+
+  document.getElementById("logout-btn").addEventListener('click', function() {
+    window.location.href = '/user/logout';
+  });
+</script>
