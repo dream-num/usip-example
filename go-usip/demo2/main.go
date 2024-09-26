@@ -19,9 +19,9 @@ import (
 )
 
 func main() {
-	viper.SetConfigFile("./configs/config.yaml") // 指定配置文件路径
-	err := viper.ReadInConfig()                  // 查找并读取配置文件
-	if err != nil {                              // 处理读取配置文件的错误
+	viper.SetConfigFile("./configs/config.yaml") // the config file path
+	err := viper.ReadInConfig()
+	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
 
