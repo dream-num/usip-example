@@ -1,0 +1,13 @@
+database:
+  driver: postgresql
+  dsn: user=postgres password=postgres dbname=demo host=127.0.0.1 port=5432 sslmode=disable TimeZone=Asia/Shanghai
+
+redis:
+  addr: 127.0.0.1:6379
+
+universer:
+  host: http://127.0.0.1:8000
+
+univer:
+  docHost: http://127.0.0.1:3010/doc
+  sheetHost: http://127.0.0.1:3010
