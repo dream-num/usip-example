@@ -14,6 +14,9 @@ const universerSuccessCode = 1
 
 type UniverseService interface {
 	CreateUnit(req CreateUnitRequest) (unitId string, err error)
+	UploadFile(req ImportReq) (fileId string, err error)
+	Import(req UniverserImportReq) (taskId string, err error)
+	PullResult(req UniverserPullReq) (string, error)
 }
 
 func NewUniverseService() UniverseService {
@@ -71,4 +74,130 @@ func (s *universeService) CreateUnit(req CreateUnitRequest) (string, error) {
 	}
 
 	return unit.UnitId, nil
+}
+
+type UploadFileResp struct {
+	FileId string `json:"FileId"`
+}
+
+func (s *universeService) UploadFile(req ImportReq) (fileId string, err error) {
+	client := resty.New()
+	resp, err := client.R().
+		SetHeader("Cookie", req.Cookie).
+		SetFileReader("file", req.FileName, req.FormFile).
+		Post(fmt.Sprintf("%s/universer-api/stream/file/upload?size=%d", viper.GetString("universer.host"), req.FileSize))
+	if err != nil {
+		log.Printf("Error while uploading file: %v", err)
+		return
+	}
+
+	if resp.StatusCode() != 200 {
+		log.Printf("Error while uploading file: %v", resp.String())
+		return "", fmt.Errorf("Error while uploading file: %v", resp.String())
+	}
+
+	body := resp.Body()
+	var fileResp struct {
+		FileId string `json:"FileId"`
+	}
+	if err = json.Unmarshal(body, &fileResp); err != nil {
+		log.Printf("Error while uploading file: %v", err)
+		return
+	}
+
+	return fileResp.FileId, nil
+}
+
+type UniverserImportReq struct {
+	FileId     string
+	Type       int
+	OutputType int
+
+	Cookie string `json:"-"`
+}
+
+func (s *universeService) Import(req UniverserImportReq) (taskId string, err error) {
+	client := resty.New()
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Cookie", req.Cookie).
+		SetBody(map[string]interface{}{
+			"fileID":     req.FileId,
+			"outputType": req.OutputType,
+		}).
+		Post(fmt.Sprintf("%s/universer-api/exchange/%d/import", viper.GetString("universer.host"), req.Type))
+	if err != nil {
+		log.Printf("Error while uploading file: %v", err)
+		return "", err
+	}
+
+	if resp.StatusCode() != 200 {
+		log.Printf("Error while uploading file: %v", resp.String())
+		return "", fmt.Errorf("Error while uploading file: %v", resp.String())
+	}
+	var importResp struct {
+		Error  UniverserErr `json:"error"`
+		TaskId string       `json:"taskID"`
+	}
+	body := resp.Body()
+	if err := json.Unmarshal(body, &importResp); err != nil {
+		log.Printf("Error while uploading file: %v", err)
+		return "", err
+	}
+
+	if importResp.Error.Code != universerSuccessCode {
+		log.Printf("Error while uploading file: %v", importResp.Error.Message)
+		return "", fmt.Errorf("Error while uploading file: %v", importResp.Error.Message)
+	}
+
+	return importResp.TaskId, nil
+}
+
+type UniverserPullReq struct {
+	TaskId string
+	Cookie string
+}
+
+func (s *universeService) PullResult(req UniverserPullReq) (string, error) {
+	client := resty.New()
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Cookie", req.Cookie).
+		Get(fmt.Sprintf("%s/universer-api/exchange/task/%s", viper.GetString("universer.host"), req.TaskId))
+	if err != nil {
+		log.Printf("Error while pulling result: %v", err)
+		return "", err
+	}
+
+	if resp.StatusCode() != 200 {
+		log.Printf("Error while pulling result: %v", resp.String())
+		return "", fmt.Errorf("Error while pulling result: %v", resp.String())
+	}
+
+	var result struct {
+		Error  UniverserErr `json:"error"`
+		Status string       `json:"status"`
+		Import struct {
+			UnitId string `json:"unitID"`
+		} `json:"import"`
+	}
+	body := resp.Body()
+	if err := json.Unmarshal(body, &result); err != nil {
+		log.Printf("Error while pulling result: %v", err)
+		return "", err
+	}
+
+	if result.Error.Code != universerSuccessCode {
+		log.Printf("Error while pulling result: %v", result.Error.Message)
+		return "", fmt.Errorf("Error while pulling result: %v", result.Error.Message)
+	}
+
+	switch result.Status {
+	case "done":
+		return result.Import.UnitId, nil
+	case "pending":
+		return "", nil
+	default:
+		return "", fmt.Errorf("Error while pulling result: %v", result.Status)
+	}
 }

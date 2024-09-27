@@ -85,3 +85,49 @@ func (c *FileController) PostNew() mvc.Result {
 		Path: path,
 	}
 }
+
+func (c *FileController) PostImport() mvc.Result {
+	userId, ok := isLoggedIn(c.Session)
+	if !ok {
+		return mvc.Response{
+			Code: iris.StatusUnauthorized,
+		}
+	}
+
+	unitType := datamodels.FileTypeInt(c.Ctx.FormValue("type"))
+	formfile, fileHeader, err := c.Ctx.FormFile("file")
+	if err != nil {
+		return mvc.Response{
+			Code: iris.StatusBadRequest,
+			Text: err.Error(),
+		}
+	}
+
+	file, err := c.Service.Import(services.ImportReq{
+		FormFile: formfile,
+		UserId:   userId,
+		FileName: fileHeader.Filename,
+		FileSize: int(fileHeader.Size),
+		Type:     unitType,
+		Cookie:   c.Ctx.GetHeader("Cookie"),
+	})
+	if err != nil {
+		return mvc.Response{
+			Code: iris.StatusInternalServerError,
+			Text: err.Error(),
+		}
+	}
+
+	path := "/file/list"
+	switch unitType {
+	case datamodels.UnitTypeDoc:
+		path = viper.GetString("univer.docHost") + "/?type=1&unit=" + file.UnitId
+	case datamodels.UnitTypeSheet:
+		path = viper.GetString("univer.sheetHost") + "/?type=2&unit=" + file.UnitId
+	}
+
+	return mvc.Response{
+		Code: iris.StatusFound,
+		Path: path,
+	}
+}

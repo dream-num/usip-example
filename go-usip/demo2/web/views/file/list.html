@@ -1,33 +1,93 @@
-<p><button id="new-btn">New File</button></p>
-<form id="new-form" action="/file/new" method="post" enctype="multipart/form-data" style="visibility: hidden;">
-  <label><b>Name</b></label>
-  <input type="text" placeholder="Enter Name" name="name" required>
+<div>
+  <button id="new-btn">New File</button>
+  <button id="import-btn">Import File</button>
+</div>
 
-  <label><b>Type</b></label>
-  <input type="radio" name="type" value="doc" checked>
-  <label>doc</label>
+<input type="file" id="file" style="visibility: hidden;"/>
 
-  <input type="radio" name="type" value="sheet" checked>
-  <label>sheet</label>
+<div id="div-form" style="visibility: hidden;">
+  <form id="form" action="" method="post" enctype="multipart/form-data">
+    <label><b>Name</b></label>
+    <input type="text" placeholder="Enter Name" name="name" required>
+  
+    <label><b>Type</b></label>
+    <input type="radio" name="type" value="doc" checked>
+    <label>doc</label>
+  
+    <input type="radio" name="type" value="sheet" checked>
+    <label>sheet</label>
+    
+    <div style="width: 100%;">
+      <button id="form-new-btn" type="submit" style="width: 30%;">new</button>
+      <button id="form-cancel-btn" style="width: 30%; background-color: darkgray;">cancel</button>
+    </div>
+  </form>
+</div>
 
-  <button type="submit">new</button>
-</form>
-
-<p>File list: <button id="logout-btn" style="width: 100px; position: absolute; right: 20px; padding: 0px 20px 0px 20px; height: 30px; margin: 0;">Logout</button></p>
-<hr/>
-{{ range .Files }}
-<p>
-  {{ if (eq .UnitType 1) }}
-    <a href="{{$.DocHost}}/?unit={{.UnitId}}&type=1">{{.Name}}.docx</a>
-  {{ else if (eq .UnitType 2) }}
-    <a href="{{$.SheetHost}}/?unit={{.UnitId}}&type=2">{{.Name}}.xlsx</a>
+<div>
+  <p>File list: <button id="logout-btn" style="width: 100px; position: absolute; right: 20px; padding: 0px 20px 0px 20px; height: 30px; margin: 0;">Logout</button></p>
+  <hr/>
+  {{ range .Files }}
+  <p>
+    {{ if (eq .UnitType 1) }}
+      <a href="{{$.DocHost}}/?unit={{.UnitId}}&type=1">{{.Name}}.docx</a>
+    {{ else if (eq .UnitType 2) }}
+      <a href="{{$.SheetHost}}/?unit={{.UnitId}}&type=2">{{.Name}}.xlsx</a>
+    {{ end }}
+  </p>
   {{ end }}
-</p>
-{{ end }}
+</div>
 
 <script type="text/javascript">
   document.getElementById("new-btn").addEventListener('click', function() {
-    document.getElementById('new-form').style.visibility = 'visible';
+    document.getElementById('div-form').style.visibility = 'visible';
+  });
+
+  document.getElementById("import-btn").addEventListener('click', function() {
+    document.getElementById('file').click();
+  });
+
+  document.getElementById('file').onchange = function() {
+    var file = document.getElementById('file').files[0];
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('size', file.size);
+    let type = file.name.split('.')[1].toLowerCase();
+    switch (type) {
+      case 'doc':
+        formData.append('type', 'doc');
+        break;
+      case 'docx':
+        formData.append('type', 'doc');
+        break;
+      case 'xlsx':
+        formData.append('type', 'sheet');
+        break;
+      default:
+        alert('Invalid file type');
+        return;
+    }
+    formData.append('name', file.name.split('.')[0]);
+    fetch('/file/import', {
+      method: 'POST',
+      body: formData,
+    }).then(resp => {
+      if (resp.redirected) {
+        window.location.href = resp.url;
+      } else {
+        alert('Import failed');
+      }
+    });
+  };
+
+  document.getElementById("form-new-btn").addEventListener('click', function() {
+    document.getElementById('form').onsubmit = function() { return true; };
+    document.getElementById('form').action = '/file/new';
+  });
+
+  document.getElementById("form-cancel-btn").addEventListener('click', function() {
+    document.getElementById('div-form').style.visibility = 'hidden';
+    document.getElementById('form').onsubmit = function() { return false; };
   });
 
   document.getElementById("logout-btn").addEventListener('click', function() {
