@@ -25,20 +25,49 @@
 </div>
 
 <div>
-  <p>File list: <button id="logout-btn" style="width: 100px; position: absolute; right: 20px; padding: 0px 20px 0px 20px; height: 30px; margin: 0;">Logout</button></p>
+  <div style="padding: 10px 0;">
+    File list:
+    <div class="div-image" style="position: absolute; right: 150px; margin: -30px 0;">
+      <img src="/user/avatar/{{.UserId}}" style="width: 100%; height: auto;"/>
+    </div>
+    <button id="logout-btn" style="width: 100px; height: 30px; background-color: chocolate; position: absolute; right: 20px; padding: 0px 20px; margin: 0;">Logout</button>
+  </div>
   <hr/>
+  <button id="delete-btn" style="width: 100px;">Delete</button>
   {{ range .Files }}
-  <p>
+  <p onclick="checkBox(event)" class="hover-effect">
+    <input type="checkbox" name="fileIds" class="fileCheckbox" value="{{.ID}}" style="width: 20px;"/>
     {{ if (eq .UnitType 1) }}
-      <a href="{{$.DocHost}}/?unit={{.UnitId}}&type=1">{{.Name}}.docx</a>
+    <a href="{{$.DocHost}}/?unit={{.UnitId}}&type=1">{{.Name}}.docx</a>
     {{ else if (eq .UnitType 2) }}
-      <a href="{{$.SheetHost}}/?unit={{.UnitId}}&type=2">{{.Name}}.xlsx</a>
+    <a href="{{$.SheetHost}}/?unit={{.UnitId}}&type=2">{{.Name}}.xlsx</a>
     {{ end }}
+    <a href="/file/export?fileId={{.ID}}" style="margin: 0 10px;">export</a>
+    <button style="width: 70px; position: absolute; padding: 0px 20px; height: 20px; margin: 0;" onclick="showDialog(event)" fileId="{{.ID}}">Invite</button>
   </p>
   {{ end }}
 </div>
 
+<dialog id="dialog" style="width: 300px;">
+  <div id="dialog-msg"></div>
+  <hr>
+  <span style="margin-right: 10px;">Role</span>
+  <select id="select-role" style="width: 100px; height: 20px;">
+    <option value="reader">Reader</option>
+    <option value="editor">Editor</option>
+  </select>
+  <button id="dialog-ok-btn">OK</button>
+  <button id="dialog-cancel-btn" style="background-color: darkgray;">Cancel</button>
+</dialog>
+
 <script type="text/javascript">
+  function checkBox(event) {
+    let target = event.target.querySelector('.fileCheckbox');
+    if (target) {
+      target.checked = !target.checked;
+    }
+  }
+
   document.getElementById("new-btn").addEventListener('click', function() {
     document.getElementById('div-form').style.visibility = 'visible';
   });
@@ -93,4 +122,161 @@
   document.getElementById("logout-btn").addEventListener('click', function() {
     window.location.href = '/user/logout';
   });
+
+  document.getElementById("delete-btn").addEventListener('click', function() {
+    let param = new URLSearchParams();
+    document.querySelectorAll('.fileCheckbox').forEach(function(checkbox) {
+      if (checkbox.checked) {
+        param.append('fileIds', checkbox.value);
+      }
+    });
+    if (param.size === 0) {
+      alert('Please select files to delete');
+      return;
+    }
+    fetch('/file?'+param.toString(), {
+      method: 'DELETE',
+    }).then(resp => {
+      window.location.href = "";
+    });
+  });
+
+  async function getPeople(next) {
+    let resp = await fetch(`/user/people?next=${next}&size=10`)
+    let data = await resp.json();
+    return data;
+  }
+
+  var currentUserId = "{{.UserId}}";
+  var invite = [];
+  var pageStack = [];
+  var inviteFileId = 0;
+
+  function showPeople(data) {
+    console.log(data);
+    let people = data.users;
+    let dialogMsg = document.getElementById('dialog-msg');
+    dialogMsg.innerHTML = '';
+    people.forEach(person => {
+      let div = document.createElement('div');
+      div.style.display = 'flex';
+      div.style.justifyContent = 'space-between';
+      div.className= 'hover-effect';
+      let span = document.createElement('span');
+      span.innerText = person.nickname;
+      let checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.value = person.user_id; 
+      checkbox.className = 'inviteCheckbox';
+      checkbox.checked = invite.includes(person.user_id);
+      checkbox.onchange = function() {
+        if (checkbox.checked && checkBox.value !== currentUserId) {
+          invite.push(checkbox.value);
+        } else {
+          invite = invite.filter(id => id !== checkbox.value);
+        }
+      };
+      if (person.user_id === currentUserId) {
+        checkbox.disabled = true;
+        span.innerText += ' (You)';
+      }
+      div.onclick = function() {
+        checkbox.click();
+      };
+      div.appendChild(checkbox);
+      div.appendChild(span);
+      dialogMsg.appendChild(div);
+    });
+    if (pageStack.length>1 || data.next != 0) {
+      let div = document.createElement('div');
+      div.style.height = '20px';
+      div.style.padding = '5px';
+      if (pageStack.length>1) {
+        let page = pageStack[pageStack.length - 2];
+        let prevSpan = document.createElement('span');
+        prevSpan.innerText = '<';
+        prevSpan.style.color = 'blue';
+        prevSpan.style.position = 'absolute';
+        prevSpan.style.left = '30px';
+        prevSpan.onclick = function() {
+          getPeople(page.prev).then(newData => {
+            pageStack.pop();
+            showPeople(newData);
+          });
+        };
+        div.appendChild(prevSpan);
+      }
+      if (data.next != 0) {
+        let nextSpan = document.createElement('span');
+        nextSpan.innerText = '>';
+        nextSpan.style.color = 'blue';
+        nextSpan.style.position = 'absolute';
+        nextSpan.style.right = '30px';
+        nextSpan.onclick = function() {
+          getPeople(data.next).then(newData => {
+            pageStack.push({prev: data.next});
+            showPeople(newData);
+          });
+        };
+        div.appendChild(nextSpan);
+      }
+      dialogMsg.appendChild(div);
+    }
+    document.getElementById('dialog').showModal();
+  }
+
+  function showDialog(event) {
+    inviteFileId = event.target.getAttribute('fileId');
+    invite = [];
+    pageStack = [];
+    getPeople(0).then(data => {
+      pageStack.push({prev: 0});
+      showPeople(data);
+    });
+  }
+
+  document.getElementById("dialog-cancel-btn").addEventListener('click', function() {
+    document.getElementById('dialog').close();
+  });
+  
+  document.getElementById("dialog-ok-btn").addEventListener('click', function() {
+    fetch('/file/join', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userIds: invite,
+        fileId: parseInt(inviteFileId),
+        role: document.getElementById("select-role").value,
+      }),
+    }).then(resp => {
+      if (resp.status === 200) {
+        document.getElementById('dialog').close();
+        alert('Invite success');
+      } else {
+        alert('Invite failed');
+      }
+    });
+  });
 </script>
+
+<style>
+  .hover-effect {
+    transition: background-color 0.3s;
+  }
+
+  .hover-effect:hover {
+    background-color: lightgrey;
+  }
+
+  .div-image {
+    width: 40px; 
+    height: 40px;
+    border: 2px solid #3498db; 
+    border-radius: 50%; 
+    overflow: hidden; 
+    display: flex;
+    padding: 0;
+  }
+</style>

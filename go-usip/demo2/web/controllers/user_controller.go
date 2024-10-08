@@ -5,6 +5,7 @@ package controllers
 import (
 	"go-usip/datamodels"
 	"go-usip/services"
+	"image/png"
 
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/mvc"
@@ -157,4 +158,43 @@ func (c *UserController) AnyLogout() {
 	}
 
 	c.Ctx.Redirect("/user/login")
+}
+
+func (c *UserController) GetPeople() mvc.Result {
+	_, ok := isLoggedIn(c.Session)
+	if !ok {
+		// if it's not logged in then redirect user to the login page.
+		return mvc.Response{Path: "/user/login"}
+	}
+
+	nextId := c.Ctx.URLParamIntDefault("next", 0)
+	size := c.Ctx.URLParamIntDefault("size", 10)
+	users, latest := c.Service.GetByPage(uint(nextId), uint(size))
+	nextId = 0
+	if !latest {
+		nextId = int(users[len(users)-1].ID)
+	}
+
+	c.Ctx.JSON(iris.Map{
+		"users": users,
+		"next":  nextId,
+	})
+	return nil
+}
+
+func (c *UserController) GetAvatarBy(userId string) mvc.Result {
+	// get the avatar by the user ID.
+	avatar, found := c.Service.GetAvatarByUserID(userId)
+	if !found {
+		// if not found then return a simple 404 not found response.
+		return mvc.Response{
+			Code: iris.StatusNotFound,
+		}
+	}
+
+	c.Ctx.Header("Content-Type", "image/png")
+	c.Ctx.Header("Cache-Control", "public, max-age=604800")
+	// write the image to the response.
+	png.Encode(c.Ctx.ResponseWriter(), avatar)
+	return nil
 }

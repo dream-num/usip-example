@@ -14,6 +14,7 @@ type UserRepository interface {
 	Get(userId string) (user datamodels.User, found bool)
 	BatchGet(userIds []string) (users []datamodels.User, found bool)
 	GetByUsername(username string) (user datamodels.User, found bool)
+	GetByPage(nextId, size uint) ([]datamodels.User, bool)
 
 	InsertOrUpdate(user datamodels.User) (updatedUser datamodels.User, err error)
 	Delete(userId string) (deleted bool)
@@ -57,6 +58,15 @@ func (r *userRepository) GetByUsername(username string) (user datamodels.User, f
 		return user, false
 	}
 	return user, true
+}
+
+func (r *userRepository) GetByPage(nextId, size uint) ([]datamodels.User, bool) {
+	users := []datamodels.User{}
+	if err := r.db.Where("id > ?", nextId).Order("id").Limit(int(size)).Find(&users).Error; err != nil {
+		log.Printf("Error while getting users by page: %v", err)
+		return users, false
+	}
+	return users, true
 }
 
 func (r *userRepository) InsertOrUpdate(user datamodels.User) (datamodels.User, error) {

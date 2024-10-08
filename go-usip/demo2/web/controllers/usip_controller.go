@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"fmt"
 	"go-usip/services"
 	"log"
 
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/mvc"
 	"github.com/kataras/iris/v12/sessions"
+	"github.com/spf13/viper"
 )
 
 type UsipController struct {
@@ -54,6 +56,7 @@ func (c *UsipController) GetCredential() mvc.Result {
 		User: UsipUser{
 			UserId: user.UserId,
 			Name:   user.Nickname,
+			Avatar: fmt.Sprintf("%s/user/avatar/%s", viper.GetString("host"), user.UserId),
 		},
 	})
 
@@ -87,7 +90,7 @@ func (c *UsipController) PostUserinfo() mvc.Result {
 		users = append(users, UsipUser{
 			UserId: u.UserId,
 			Name:   u.Nickname,
-			// Avatar: u.Avatar,
+			Avatar: fmt.Sprintf("%s/user/avatar/%s", viper.GetString("host"), u.UserId),
 		})
 	}
 
@@ -171,9 +174,9 @@ func (c *UsipController) PostCollaborators() mvc.Result {
 			}
 			subjects = append(subjects, UsipCollaborator{
 				Subject: UsipSubject{
-					ID:   user.UserId,
-					Name: user.Nickname,
-					// Avatar: user.Avatar,
+					ID:     user.UserId,
+					Name:   user.Nickname,
+					Avatar: fmt.Sprintf("%s/user/avatar/%s", viper.GetString("host"), user.UserId),
 				},
 				Role: string(v.Role),
 			})
