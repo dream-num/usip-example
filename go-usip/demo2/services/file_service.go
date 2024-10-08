@@ -4,9 +4,11 @@ import (
 	"errors"
 	"go-usip/datamodels"
 	"go-usip/repositories"
+	"io"
 	"log"
 	"mime/multipart"
 	"strings"
+	"time"
 )
 
 type FileService interface {
@@ -14,19 +16,24 @@ type FileService interface {
 	GetByFileId(fileId uint) (datamodels.File, bool)
 	GetCollaborators(fileId uint) ([]datamodels.FileCollaborator, bool)
 	GetCollaboratorsByUnitId(unitId string) ([]datamodels.FileCollaborator, bool)
+	CheckPermission(req CheckPermissionReq) bool
 
 	Create(req CreateUnitRequest) (datamodels.File, error)
 	Import(req ImportReq) (datamodels.File, error)
+	Export(req ExportReq) (resp ExportResp, err error)
+	Join(req JoinReq) error
+
+	BatchDelete(userId string, fileIds []uint) error
 }
 
 type fileService struct {
 	repo      repositories.FileRepository
 	collaRepo repositories.FileCollaboratorRepository
 
-	uSvc UniverseService
+	uSvc UniverserService
 }
 
-func NewFileService(repo repositories.FileRepository, collaRepo repositories.FileCollaboratorRepository, uSvc UniverseService) FileService {
+func NewFileService(repo repositories.FileRepository, collaRepo repositories.FileCollaboratorRepository, uSvc UniverserService) FileService {
 	return &fileService{
 		repo:      repo,
 		collaRepo: collaRepo,
@@ -156,6 +163,7 @@ func (s *fileService) Import(req ImportReq) (file datamodels.File, err error) {
 		if unitId != "" {
 			break
 		}
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	file, err = s.create(unitId, CreateUnitRequest{
@@ -170,4 +178,126 @@ func (s *fileService) Import(req ImportReq) (file datamodels.File, err error) {
 	log.Printf("File created: %v", file)
 
 	return file, nil
+}
+
+func (s *fileService) BatchDelete(userId string, fileIds []uint) error {
+	return s.collaRepo.BatchDelete(userId, fileIds)
+}
+
+type ExportReq struct {
+	FileId uint
+	UserId string
+
+	Cookie string
+}
+
+type ExportResp struct {
+	FileName string
+	Reader   io.ReadCloser
+}
+
+func (s *fileService) Export(req ExportReq) (resp ExportResp, err error) {
+	file, found := s.GetByFileId(req.FileId)
+	if !found {
+		return resp, errors.New("File not found")
+	}
+
+	_, found = s.collaRepo.Get(req.FileId, req.UserId)
+	if !found {
+		return resp, errors.New("File not found")
+	}
+
+	taskId, err := s.uSvc.Export(UniverserExportReq{
+		UnitId: file.UnitId,
+		Type:   file.UnitType,
+		Cookie: req.Cookie,
+	})
+	if err != nil {
+		log.Printf("Error while exporting file: %v", err)
+		return
+	}
+
+	var fileId string
+	for {
+		fileId, err = s.uSvc.PullResult(UniverserPullReq{
+			TaskId:       taskId,
+			Cookie:       req.Cookie,
+			ExchangeType: ExchangeTypeExport,
+		})
+		if err != nil {
+			log.Printf("Error while getting task: %v", err)
+			return
+		}
+		if fileId != "" {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	reader, err := s.uSvc.GetFile(UniverserGetFileReq{
+		FileId: fileId,
+		Cookie: req.Cookie,
+	})
+	if err != nil {
+		log.Printf("Error while getting file: %v", err)
+		return
+	}
+
+	resp.Reader = reader
+	resp.FileName = file.Name
+	switch file.UnitType {
+	case datamodels.UnitTypeDoc:
+		resp.FileName += ".docx"
+	case datamodels.UnitTypeSheet:
+		resp.FileName += ".xlsx"
+	}
+	return
+}
+
+type JoinReq struct {
+	UserIds []string
+	FileId  uint
+	Role    datamodels.Role
+}
+
+func (s *fileService) Join(req JoinReq) error {
+	var data []datamodels.FileCollaborator
+	for _, userId := range req.UserIds {
+		data = append(data, datamodels.FileCollaborator{
+			FileId: req.FileId,
+			UserId: userId,
+			Role:   req.Role,
+		})
+	}
+
+	return s.collaRepo.InsertOrUpdate(data)
+}
+
+type Action string
+
+const (
+	ActionDelete Action = "delete"
+	ActionJoin   Action = "join"
+)
+
+type CheckPermissionReq struct {
+	FileId uint
+	UserId string
+	Action Action
+}
+
+func (s *fileService) CheckPermission(req CheckPermissionReq) bool {
+	colla, found := s.collaRepo.Get(req.FileId, req.UserId)
+	if !found {
+		return false
+	}
+
+	switch req.Action {
+	case ActionDelete:
+		return colla.Role == datamodels.RoleOwner
+	case ActionJoin:
+		return datamodels.RoleLever[colla.Role] >= datamodels.RoleLever[datamodels.RoleEditor]
+	}
+
+	return false
 }

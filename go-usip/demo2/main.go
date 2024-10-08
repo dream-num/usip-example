@@ -59,7 +59,8 @@ func main() {
 	fileRepo := repositories.NewFileRepository(db)
 	fileCollaRepo := repositories.NewFileCollaboratorRepository(db)
 
-	userService := services.NewUserService(userRepo)
+	avatarService := services.NewAvatarService()
+	userService := services.NewUserService(userRepo, avatarService)
 	universerService := services.NewUniverseService()
 	fileService := services.NewFileService(fileRepo, fileCollaRepo, universerService)
 

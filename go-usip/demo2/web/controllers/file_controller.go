@@ -5,6 +5,7 @@ package controllers
 import (
 	"go-usip/datamodels"
 	"go-usip/services"
+	"io"
 
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/mvc"
@@ -39,6 +40,7 @@ func (c *FileController) GetList() mvc.Result {
 	view := mvc.View{
 		Name: "file/list.html",
 		Data: iris.Map{
+			"UserId":    userId,
 			"Files":     files,
 			"DocHost":   viper.GetString("univer.docHost"),
 			"SheetHost": viper.GetString("univer.sheetHost"),
@@ -130,4 +132,120 @@ func (c *FileController) PostImport() mvc.Result {
 		Code: iris.StatusFound,
 		Path: path,
 	}
+}
+
+func (c *FileController) GetExport() mvc.Result {
+	userId, ok := isLoggedIn(c.Session)
+	if !ok {
+		return mvc.Response{
+			Code: iris.StatusUnauthorized,
+		}
+	}
+
+	fileId, err := c.Ctx.URLParamInt("fileId")
+	if err != nil {
+		return mvc.Response{
+			Code: iris.StatusBadRequest,
+			Text: err.Error(),
+		}
+	}
+
+	result, err := c.Service.Export(services.ExportReq{
+		FileId: uint(fileId),
+		UserId: userId,
+		Cookie: c.Ctx.GetHeader("Cookie"),
+	})
+	if err != nil {
+		return mvc.Response{
+			Code: iris.StatusInternalServerError,
+			Text: err.Error(),
+		}
+	}
+
+	c.Ctx.Header("Content-Disposition", "attachment; filename="+result.FileName)
+	_, err = io.Copy(c.Ctx.ResponseWriter(), result.Reader)
+	if err != nil {
+		return mvc.Response{
+			Code: iris.StatusInternalServerError,
+			Text: err.Error(),
+		}
+	}
+	defer result.Reader.Close()
+
+	return mvc.Response{}
+}
+
+func (c *FileController) Delete() mvc.Result {
+	userId, ok := isLoggedIn(c.Session)
+	if !ok {
+		return mvc.Response{
+			Code: iris.StatusUnauthorized,
+		}
+	}
+
+	var req struct {
+		FileIds []uint `json:"fileIds"`
+	}
+
+	if err := c.Ctx.ReadForm(&req); err != nil {
+		return mvc.Response{
+			Code: iris.StatusBadRequest,
+			Text: err.Error(),
+		}
+	}
+
+	err := c.Service.BatchDelete(userId, req.FileIds)
+	if err != nil {
+		return mvc.Response{
+			Code: iris.StatusInternalServerError,
+			Text: err.Error(),
+		}
+	}
+
+	return mvc.Response{}
+}
+
+func (c *FileController) PostJoin() mvc.Result {
+	userId, ok := isLoggedIn(c.Session)
+	if !ok {
+		return mvc.Response{
+			Code: iris.StatusUnauthorized,
+		}
+	}
+
+	var req struct {
+		UserIds []string `json:"userIds"`
+		FileId  uint     `json:"fileId"`
+		Role    string   `json:"role"`
+	}
+	if err := c.Ctx.ReadJSON(&req); err != nil {
+		return mvc.Response{
+			Code: iris.StatusBadRequest,
+			Text: err.Error(),
+		}
+	}
+
+	if !c.Service.CheckPermission(services.CheckPermissionReq{
+		FileId: req.FileId,
+		UserId: userId,
+		Action: services.ActionJoin,
+	}) {
+		return mvc.Response{
+			Code: iris.StatusForbidden,
+		}
+	}
+
+	err := c.Service.Join(services.JoinReq{
+		FileId:  req.FileId,
+		Role:    datamodels.Role(req.Role),
+		UserIds: req.UserIds,
+	})
+	if err != nil {
+		return mvc.Response{
+			Code: iris.StatusInternalServerError,
+			Text: err.Error(),
+		}
+	}
+
+	return mvc.Response{}
 }

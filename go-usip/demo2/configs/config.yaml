@@ -1,3 +1,5 @@
+host: http://localhost:8080
+
 database:
   driver: postgresql
   dsn: user=postgres password=postgres dbname=demo host=127.0.0.1 port=5432 sslmode=disable TimeZone=Asia/Shanghai
@@ -6,8 +8,10 @@ redis:
   addr: 127.0.0.1:6379
 
 universer:
-  host: http://127.0.0.1:8000
+  host: http://localhost:8000
 
 univer:
-  docHost: http://127.0.0.1:3010/doc
-  sheetHost: http://127.0.0.1:3010
+  docHost: http://localhost:3010/doc
+  sheetHost: http://localhost:3010
+
+font: web/public/font/SourceHanSansCN-VF.ttf

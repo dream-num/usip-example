@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"image"
 
 	"go-usip/datamodels"
 	"go-usip/repositories"
@@ -17,6 +18,9 @@ type UserService interface {
 	GetByID(userId string) (datamodels.User, bool)
 	GetInIDs(userIds []string) ([]datamodels.User, bool)
 	GetByUsernameAndPassword(username, userPassword string) (datamodels.User, bool)
+	GetByPage(nextId, size uint) (users []datamodels.User, latest bool)
+	GetAvatarByUserID(userId string) (image.Image, bool)
+
 	DeleteByID(userId string) bool
 
 	Update(userId string, user datamodels.User) (datamodels.User, error)
@@ -27,14 +31,16 @@ type UserService interface {
 }
 
 // NewUserService returns the default user service.
-func NewUserService(repo repositories.UserRepository) UserService {
+func NewUserService(repo repositories.UserRepository, aSvc AvatarService) UserService {
 	return &userService{
 		repo: repo,
+		aSvc: aSvc,
 	}
 }
 
 type userService struct {
 	repo repositories.UserRepository
+	aSvc AvatarService
 }
 
 // GetByID returns a user based on its id.
@@ -62,6 +68,33 @@ func (s *userService) GetByUsernameAndPassword(username, userPassword string) (d
 	}
 
 	return user, true
+}
+
+func (s *userService) GetByPage(nextId, size uint) ([]datamodels.User, bool) {
+	users, found := s.repo.GetByPage(nextId, size+1)
+	if !found {
+		return nil, false
+	}
+	if len(users) < int(size)+1 {
+		return users, true
+	}
+	return users[:size], false
+}
+
+func (s *userService) GetAvatarByUserID(userId string) (image.Image, bool) {
+	user, found := s.repo.Get(userId)
+	if !found {
+		return nil, false
+	}
+
+	name := []rune(user.Nickname)
+	c := name[0:1]
+	image, err := s.aSvc.GenerateAvatar(string(c))
+	if err != nil {
+		return nil, false
+	}
+
+	return image, true
 }
 
 // Update updates every field from an existing User,

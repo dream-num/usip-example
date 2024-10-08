@@ -13,6 +13,8 @@ type FileRepository interface {
 	BatchGet(ids []uint) (files []datamodels.File, found bool)
 
 	Create(file datamodels.File) (datamodels.File, error)
+
+	BatchDelete(ids []uint) error
 }
 
 func NewFileRepository(db *gorm.DB) FileRepository {
@@ -55,4 +57,8 @@ func (r *fileRepository) BatchGet(ids []uint) (files []datamodels.File, found bo
 
 func (r *fileRepository) Create(file datamodels.File) (datamodels.File, error) {
 	return file, r.db.Create(&file).Error
+}
+
+func (r *fileRepository) BatchDelete(ids []uint) error {
+	return r.db.Where("id IN ?", ids).Delete(&datamodels.File{}).Error
 }

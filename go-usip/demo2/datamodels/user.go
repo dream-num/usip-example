@@ -14,10 +14,10 @@ import (
 // of the example, we will use this datamodel
 // as the only one User model in our application.
 type User struct {
-	gorm.Model
+	gorm.Model     `json:"-" form:"-"`
 	UserId         string `json:"user_id" form:"user_id" gorm:"unique"`
 	Nickname       string `json:"nickname" form:"nickname"`
-	Username       string `json:"username" form:"username" gorm:"unique"`
+	Username       string `json:"-" form:"-" gorm:"unique"`
 	HashedPassword []byte `json:"-" form:"-"`
 }
 
