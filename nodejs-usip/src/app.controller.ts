@@ -1,12 +1,13 @@
-import { Controller, Get, Headers, Query, Post, Body } from '@nestjs/common';
+import { Controller, Get, Query, Post, Body } from '@nestjs/common';
 import { AppService } from './app.service';
+import { Cookies } from './decorator/cookies.decorator';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get('credential')
-  verifyCredential(@Headers("x-authorization") token: string): any {
+  verifyCredential(@Cookies('x-authorization') token: string): any {
     let userId = this.appService.verifyCredential(token);
     if (!userId) {
       return { error: "Invalid token" };
