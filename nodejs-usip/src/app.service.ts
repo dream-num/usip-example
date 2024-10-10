@@ -40,25 +40,20 @@ export class Member {
 
 @Injectable()
 export class AppService {
+  // Mock data
   xAuthorizations = {
     "token:1": "1",
     "token:2": "2",
     "token:3": "3",
+    "token:4": "4",
   }
 
+  // Mock data
   users = [
-    new User("1", "Alice", "https://example.com/alice.jpg"),
-    new User("2", "Bob", "https://example.com/bob.jpg"),
-    new User("3", "Charlie", "https://example.com/charlie.jpg"),
-  ]
-
-  members = [
-    new Member("unit1", "1", Role.Owner),
-    new Member("unit1", "2", Role.Editor),
-    new Member("unit2", "2", Role.Owner),
-    new Member("unit2", "3", Role.Editor),
-    new Member("unit3", "3", Role.Owner),
-    new Member("unit3", "1", Role.Reader),
+    new User("1", "Alice", this.generateAvatar("Alice")),
+    new User("2", "Bob", this.generateAvatar("Bob")),
+    new User("3", "Charlie", this.generateAvatar("Charlie")),
+    new User("4", "David", this.generateAvatar("David")),
   ]
 
 
@@ -76,21 +71,47 @@ export class AppService {
   }
 
   getRole(unitId: string, userId: string): Member {
-    for (let member of this.members) {
-      if (member.unitId === unitId && member.userId === userId) {
-        return member;
-      }
+    // TODO: implement this with real data
+    const user = this.getUser(userId);
+    
+    // Mock data
+    if(user.name === "Alice") {
+      return new Member(unitId, userId, Role.Owner);
+    }
+    if(user.name === "Bob" || user.name === "David") {
+      return new Member(unitId, userId, Role.Editor);
+    }
+    if(user.name === "Charlie") {
+      return new Member(unitId, userId, Role.Reader);
     }
     return null;
   }
 
   getMembers(unitId: string): Member[] {
+    // TODO: implement this with real data
+
+    // Mock data
     let members = [];
-    for (let member of this.members) {
-      if (member.unitId === unitId) {
-        members.push(member);
-      }
-    }
+    members.push(new Member(unitId, "1", Role.Owner));
+    members.push(new Member(unitId, "2", Role.Editor));
+    members.push(new Member(unitId, "3", Role.Reader));
+    members.push(new Member(unitId, "4", Role.Editor));
     return members;
+  }
+
+  generateAvatar(name: string): string {
+    const color = `#${((name.charCodeAt(0) * 12345) & 0xffffff).toString(16).padStart(6, '0')}`;
+    
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+        <rect width="50" height="50" fill="${color}" />
+        <text x="50%" y="50%" dy=".1em" fill="white" font-family="Arial" font-size="20" text-anchor="middle" dominant-baseline="middle">
+          ${name.slice(0, 3)}
+        </text>
+      </svg>
+    `;
+
+    const base64 = Buffer.from(svg).toString('base64');
+    return `data:image/svg+xml;base64,${base64}`;
   }
 }
