@@ -1,6 +1,8 @@
 name: 🔮 Sync Mirror
 
 on:
+  workflow_dispatch:
+    
   push:
     branches:
       - main
