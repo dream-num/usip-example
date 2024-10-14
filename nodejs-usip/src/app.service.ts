@@ -46,6 +46,7 @@ export class AppService {
     "token:2": "2",
     "token:3": "3",
     "token:4": "4",
+    "token:5": "5",
   }
 
   // Mock data
@@ -54,6 +55,7 @@ export class AppService {
     new User("2", "Bob", this.generateAvatar("Bob")),
     new User("3", "Charlie", this.generateAvatar("Charlie")),
     new User("4", "David", this.generateAvatar("David")),
+    new User("5", "Eve", this.generateAvatar("Eve")),
   ]
 
 
@@ -75,13 +77,13 @@ export class AppService {
     const user = this.getUser(userId);
     
     // Mock data
-    if(user.name === "Alice") {
+    if(user.name === "Alice" || user.name === "Bob") {
       return new Member(unitId, userId, Role.Owner);
     }
-    if(user.name === "Bob" || user.name === "David") {
+    if(user.name === "Charlie" || user.name === "David") {
       return new Member(unitId, userId, Role.Editor);
     }
-    if(user.name === "Charlie") {
+    if(user.name === "Eve") {
       return new Member(unitId, userId, Role.Reader);
     }
     return null;
@@ -93,9 +95,10 @@ export class AppService {
     // Mock data
     let members = [];
     members.push(new Member(unitId, "1", Role.Owner));
-    members.push(new Member(unitId, "2", Role.Editor));
-    members.push(new Member(unitId, "3", Role.Reader));
+    members.push(new Member(unitId, "2", Role.Owner));
+    members.push(new Member(unitId, "3", Role.Editor));
     members.push(new Member(unitId, "4", Role.Editor));
+    members.push(new Member(unitId, "5", Role.Reader));
     return members;
   }
 
