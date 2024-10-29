@@ -12,6 +12,6 @@ universer:
 
 univer:
   docHost: http://localhost:3010/doc
-  sheetHost: http://localhost:3010
+  sheetHost: http://localhost:3010/sheet
 
 font: web/public/font/SourceHanSansCN-VF.ttf

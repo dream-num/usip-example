@@ -15,9 +15,9 @@ import (
 // as the only one User model in our application.
 type User struct {
 	gorm.Model     `json:"-" form:"-"`
-	UserId         string `json:"user_id" form:"user_id" gorm:"unique"`
-	Nickname       string `json:"nickname" form:"nickname"`
-	Username       string `json:"-" form:"-" gorm:"unique"`
+	UserId         string `json:"user_id" form:"user_id" gorm:"unique;type:varchar(255)"`
+	Nickname       string `json:"nickname" form:"nickname" gorm:"type:varchar(255)"`
+	Username       string `json:"-" form:"-" gorm:"unique" gorm:"type:varchar(255)"`
 	HashedPassword []byte `json:"-" form:"-"`
 }
 

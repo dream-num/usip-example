@@ -6,6 +6,7 @@ import (
 	"go-usip/datamodels"
 	"go-usip/services"
 	"io"
+	"strings"
 
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/mvc"
@@ -36,14 +37,16 @@ func (c *FileController) GetList() mvc.Result {
 		}
 	}
 
+	host := "http://" + strings.Split(c.Ctx.Host(), ":")[0]
+
 	files, _ := c.Service.GetByUserId(userId)
 	view := mvc.View{
 		Name: "file/list.html",
 		Data: iris.Map{
 			"UserId":    userId,
 			"Files":     files,
-			"DocHost":   viper.GetString("univer.docHost"),
-			"SheetHost": viper.GetString("univer.sheetHost"),
+			"DocHost":   getUnitHost(viper.GetString("univer.docHost"), host),
+			"SheetHost": getUnitHost(viper.GetString("univer.sheetHost"), host),
 		},
 	}
 
@@ -74,12 +77,14 @@ func (c *FileController) PostNew() mvc.Result {
 		}
 	}
 
+	host := "http://" + strings.Split(c.Ctx.Host(), ":")[0]
+
 	path := "/file/list"
 	switch datamodels.FileTypeInt(unitType) {
 	case datamodels.UnitTypeDoc:
-		path = viper.GetString("univer.docHost") + "/?type=1&unit=" + file.UnitId
+		path = getUnitHost(viper.GetString("univer.docHost"), host) + "/?type=1&unit=" + file.UnitId
 	case datamodels.UnitTypeSheet:
-		path = viper.GetString("univer.sheetHost") + "/?type=2&unit=" + file.UnitId
+		path = getUnitHost(viper.GetString("univer.sheetHost"), host) + "/?type=2&unit=" + file.UnitId
 	}
 
 	return mvc.Response{
@@ -120,12 +125,14 @@ func (c *FileController) PostImport() mvc.Result {
 		}
 	}
 
+	host := "http://" + strings.Split(c.Ctx.Host(), ":")[0]
+
 	path := "/file/list"
 	switch unitType {
 	case datamodels.UnitTypeDoc:
-		path = viper.GetString("univer.docHost") + "/?type=1&unit=" + file.UnitId
+		path = getUnitHost(viper.GetString("univer.docHost"), host) + "/?type=1&unit=" + file.UnitId
 	case datamodels.UnitTypeSheet:
-		path = viper.GetString("univer.sheetHost") + "/?type=2&unit=" + file.UnitId
+		path = getUnitHost(viper.GetString("univer.sheetHost"), host) + "/?type=2&unit=" + file.UnitId
 	}
 
 	return mvc.Response{

@@ -1,3 +1,5 @@
+<div id="list-page">
+
 <div>
   <button id="new-btn">New File</button>
   <button id="import-btn">Import File</button>
@@ -60,6 +62,12 @@
   <button id="dialog-cancel-btn" style="background-color: darkgray;">Cancel</button>
 </dialog>
 
+</div>
+
+<div id="loading" style="visibility: hidden;">
+  {{ render "shared/loading.html" . }}
+</div>
+
 <script type="text/javascript">
   function checkBox(event) {
     let target = event.target.querySelector('.fileCheckbox');
@@ -77,8 +85,8 @@
   });
 
   document.getElementById('file').onchange = function() {
-    var file = document.getElementById('file').files[0];
-    var formData = new FormData();
+    let file = document.getElementById('file').files[0];
+    let formData = new FormData();
     formData.append('file', file);
     formData.append('size', file.size);
     let type = file.name.split('.')[1].toLowerCase();
@@ -97,6 +105,10 @@
         return;
     }
     formData.append('name', file.name.split('.')[0]);
+
+    document.getElementById('list-page').style.visibility = 'hidden';
+    document.getElementById('loading').style.visibility = 'visible';
+
     fetch('/file/import', {
       method: 'POST',
       body: formData,
@@ -105,7 +117,13 @@
         window.location.href = resp.url;
       } else {
         alert('Import failed');
+        document.getElementById('list-page').style.visibility = 'visible';
+        document.getElementById('loading').style.visibility = 'hidden';
       }
+    }).catch(err => {
+      alert('Import failed');
+      document.getElementById('list-page').style.visibility = 'visible';
+      document.getElementById('loading').style.visibility = 'hidden';
     });
   };
 

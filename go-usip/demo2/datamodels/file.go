@@ -11,8 +11,8 @@ const (
 
 type File struct {
 	gorm.Model
-	Name     string `json:"name"`
-	UnitId   string `json:"unit_id"`
+	Name     string `json:"name" gorm:"type:varchar(255)"`
+	UnitId   string `json:"unit_id" gorm:"type:varchar(255)"`
 	UnitType int    `json:"unit_type"`
 }
 

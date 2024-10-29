@@ -4,6 +4,7 @@ WORKDIR /app
 
 RUN mkdir /app/web
 
+COPY configs /app/configs
 COPY bin/server /app/server
 COPY web/public /app/web/public
 COPY web/views /app/web/views
