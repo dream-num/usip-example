@@ -127,7 +127,7 @@ func GetUnitCollaboratorRole(w http.ResponseWriter, r *http.Request) {
 	userID := r.FormValue("userID")
 	unitID := r.FormValue("unitID")
 
-	role := ""
+	var role string
 	if cs, ok := UnitCollaborators[unitID]; ok {
 		for _, c := range cs {
 			if c.UserID == userID {
