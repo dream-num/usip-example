@@ -1,14 +1,26 @@
-<form action="/user/register" method="POST">
-    <div class="container">
-        <label><b>Nickname</b></label>
-        <input type="text" placeholder="Enter Nickname" name="nickname" required>
+<main class="auth-shell">
+    <section class="auth-panel">
+        <header class="auth-header">
+            <h1>Create Account</h1>
+            <p>Join and start using your workspace in seconds.</p>
+        </header>
 
-        <label><b>Username</b></label>
-        <input type="text" placeholder="Enter Username" name="username" required>
+        <form action="/user/register" method="POST" class="auth-form">
+            <label for="register-nickname"><b>Nickname</b></label>
+            <input id="register-nickname" type="text" placeholder="Enter Nickname" name="nickname" required>
 
-        <label><b>Password</b></label>
-        <input type="password" placeholder="Enter Password" name="password" required>
+            <label for="register-username"><b>Username</b></label>
+            <input id="register-username" type="text" placeholder="Enter Username" name="username" required>
 
-        <button type="submit">Register</button>
-    </div>
-</form>
+            <label for="register-password"><b>Password</b></label>
+            <input id="register-password" type="password" placeholder="Enter Password" name="password" required>
+
+            <button type="submit" class="auth-submit">Register</button>
+        </form>
+
+        <footer class="auth-footer">
+            <span>Already have an account?</span>
+            <a href="/user/login">Go to login</a>
+        </footer>
+    </section>
+</main>

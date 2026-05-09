@@ -4,6 +4,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"go-usip/datasource"
@@ -17,6 +20,40 @@ import (
 	"github.com/kataras/iris/v12/sessions/sessiondb/redis"
 	"github.com/spf13/viper"
 )
+
+const defaultPort = 8090
+
+func resolvePort() (port int, source string, err error) {
+	if value := strings.TrimSpace(os.Getenv("PORT")); value != "" {
+		port, err = strconv.Atoi(value)
+		if err != nil || port <= 0 || port > 65535 {
+			return 0, "", fmt.Errorf("invalid PORT: %q", value)
+		}
+		return port, "env:PORT", nil
+	}
+
+	if value := strings.TrimSpace(viper.GetString("server.port")); value != "" {
+		port, err = strconv.Atoi(value)
+		if err != nil || port <= 0 || port > 65535 {
+			return 0, "", fmt.Errorf("invalid server.port: %q", value)
+		}
+		return port, "config:server.port", nil
+	}
+
+	return defaultPort, "default", nil
+}
+
+func resolveRedisEnabled() (enabled bool, source string, err error) {
+	if value := strings.TrimSpace(os.Getenv("REDIS_ENABLED")); value != "" {
+		enabled, err = strconv.ParseBool(value)
+		if err != nil {
+			return false, "", fmt.Errorf("invalid REDIS_ENABLED: %q", value)
+		}
+		return enabled, "env:REDIS_ENABLED", nil
+	}
+
+	return viper.GetBool("redis.enabled"), "config:redis.enabled", nil
+}
 
 func main() {
 	viper.SetConfigFile("./configs/config.yaml") // the config file path
@@ -64,27 +101,45 @@ func main() {
 	universerService := services.NewUniverseService()
 	fileService := services.NewFileService(fileRepo, fileCollaRepo, universerService)
 
-	sessiondb := redis.New(redis.Config{
-		Network:   "tcp",
-		Addr:      viper.GetString("redis.addr"),
-		Timeout:   time.Duration(30) * time.Second,
-		MaxActive: 10,
-		Password:  "",
-		Database:  "",
-		Prefix:    "",
-		Driver:    redis.GoRedis(), // redis.Radix() can be used instead.
-	})
-	// Close connection when control+C/cmd+C
-	iris.RegisterOnInterrupt(func() {
-		sessiondb.Close()
+	sessManager := sessions.New(sessions.Config{
+		Cookie:                     "_on-premise",
+		Expires:                    7 * 24 * time.Hour,
+		AllowReclaim:               true,
+		DisableSubdomainPersistence: true,
 	})
 
-	sessManager := sessions.New(sessions.Config{
-		Cookie:       "_on-premise",
-		Expires:      7 * 24 * time.Hour,
-		AllowReclaim: true,
-	})
-	sessManager.UseDatabase(sessiondb)
+	redisEnabled, redisSource, err := resolveRedisEnabled()
+	if err != nil {
+		app.Logger().Fatal(err.Error())
+		return
+	}
+	app.Logger().Infof("redis enabled resolved from %s: %t", redisSource, redisEnabled)
+
+	if redisEnabled {
+		redisAddr := strings.TrimSpace(viper.GetString("redis.addr"))
+		if redisAddr == "" {
+			app.Logger().Fatal("redis is enabled but redis.addr is empty")
+			return
+		}
+
+		sessiondb := redis.New(redis.Config{
+			Network:   "tcp",
+			Addr:      redisAddr,
+			Timeout:   time.Duration(30) * time.Second,
+			MaxActive: 10,
+			Password:  "",
+			Database:  "",
+			Prefix:    "",
+			Driver:    redis.GoRedis(), // redis.Radix() can be used instead.
+		})
+		// Close connection when control+C/cmd+C
+		iris.RegisterOnInterrupt(func() {
+			sessiondb.Close()
+		})
+		sessManager.UseDatabase(sessiondb)
+	} else {
+		app.Logger().Warn("redis disabled; using in-memory session storage")
+	}
 
 	// "/user" based mvc application.
 	user := mvc.New(app.Party("/user"))
@@ -117,7 +172,14 @@ func main() {
 		ctx.Redirect("/file/list", iris.StatusFound)
 	})
 
-	// Starts the web server at localhost:8080
+	port, portSource, err := resolvePort()
+	if err != nil {
+		app.Logger().Fatal(err.Error())
+		return
+	}
+	app.Logger().Infof("listen port resolved from %s: %d", portSource, port)
+
+	// Starts the web server on configured port
 	// Enables faster json serialization and more.
-	app.Listen(":8080", iris.WithOptimizations)
+	app.Listen(fmt.Sprintf(":%d", port), iris.WithOptimizations)
 }

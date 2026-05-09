@@ -9,7 +9,7 @@ Dependencies:
 - univer server and demo, see: https://www.univer.ai/zh-CN/guides/sheet/server/docker , use `bash -c "$(curl -fsSL https://get.univer.ai)"` to quick intall.
 - [iris](https://www.iris-go.com/): apply web server
 - postgresql: use to save user, file data
-- redis: use to session
+- redis: optional, used for session storage when enabled
 
 ## Prepare
 Install univer server and demo
@@ -25,7 +25,27 @@ bash -c "$(curl -fsSL https://get.univer.ai)"
 go mod tidy
 ```
 
-2. config the postgresql and redis in `configs/config.yaml`
+2. configure database/server/redis in `configs/config.yaml`
+
+   Key options:
+   - `server.port`: default listen port (default `8090`)
+   - `redis.enabled`: enable redis-backed session store (default `true`)
+   - `redis.addr`: required when `redis.enabled=true`
+
+   Port priority at runtime:
+   - `PORT` environment variable
+   - `server.port` in config file
+   - default `8090`
+
+   Redis enable priority at runtime:
+   - `REDIS_ENABLED` environment variable
+   - `redis.enabled` in config file
+
+   Examples:
+   ```shell
+   PORT=9000 go run .
+   REDIS_ENABLED=false go run .
+   ```
 
    
 3. run web server

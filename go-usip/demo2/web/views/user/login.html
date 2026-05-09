@@ -1,11 +1,23 @@
-<form action="/user/login" method="POST">
-    <div class="container">
-        <label><b>Username</b></label>
-        <input type="text" placeholder="Enter Username" name="username" required>
+<main class="auth-shell">
+    <section class="auth-panel">
+        <header class="auth-header">
+            <h1>Welcome Back</h1>
+            <p>Sign in to continue to your workspace.</p>
+        </header>
 
-        <label><b>Password</b></label>
-        <input type="password" placeholder="Enter Password" name="password" required>
+        <form action="/user/login" method="POST" class="auth-form">
+            <label for="login-username"><b>Username</b></label>
+            <input id="login-username" type="text" placeholder="Enter Username" name="username" required>
 
-        <button type="submit">Login</button> <a href="/user/register">Go to register</a>
-    </div>
-</form>
+            <label for="login-password"><b>Password</b></label>
+            <input id="login-password" type="password" placeholder="Enter Password" name="password" required>
+
+            <button type="submit" class="auth-submit">Login</button>
+        </form>
+
+        <footer class="auth-footer">
+            <span>No account yet?</span>
+            <a href="/user/register">Go to register</a>
+        </footer>
+    </section>
+</main>

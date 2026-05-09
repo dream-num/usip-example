@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"image"
+	"strings"
 
 	"go-usip/datamodels"
 	"go-usip/repositories"
@@ -87,9 +88,11 @@ func (s *userService) GetAvatarByUserID(userId string) (image.Image, bool) {
 		return nil, false
 	}
 
-	name := []rune(user.Nickname)
-	c := name[0:1]
-	image, err := s.aSvc.GenerateAvatar(string(c))
+	initial := strings.TrimSpace(user.Nickname)
+	if initial == "" {
+		initial = strings.TrimSpace(user.Username)
+	}
+	image, err := s.aSvc.GenerateAvatar(initial)
 	if err != nil {
 		return nil, false
 	}

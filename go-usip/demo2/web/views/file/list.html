@@ -1,68 +1,89 @@
 <div id="list-page">
-
-<div>
-  <button id="new-btn">New File</button>
-  <button id="import-btn">Import File</button>
-</div>
-
-<input type="file" id="file" style="visibility: hidden;"/>
-
-<div id="div-form" style="visibility: hidden;">
-  <form id="form" action="" method="post" enctype="multipart/form-data">
-    <label><b>Name</b></label>
-    <input type="text" placeholder="Enter Name" name="name" required>
-  
-    <label><b>Type</b></label>
-    <input type="radio" name="type" value="doc" checked>
-    <label>doc</label>
-  
-    <input type="radio" name="type" value="sheet" checked>
-    <label>sheet</label>
-    
-    <div style="width: 100%;">
-      <button id="form-new-btn" type="submit" style="width: 30%;">new</button>
-      <button id="form-cancel-btn" style="width: 30%; background-color: darkgray;">cancel</button>
+  <div class="demo-topbar">
+    <div class="demo-title">
+      <h1>Demo2 Files</h1>
+      <p>Fast file operations with a clean, modern workspace.</p>
     </div>
-  </form>
-</div>
-
-<div>
-  <div style="padding: 10px 0;">
-    File list:
-    <div class="div-image" style="position: absolute; right: 150px; margin: -30px 0;">
-      <img src="/user/avatar/{{.UserId}}" style="width: 100%; height: auto;"/>
+    <div class="demo-user">
+      <div class="div-image" title="Current user avatar">
+        <img
+          src="/user/avatar/{{.UserId}}"
+          alt="User avatar"
+          loading="lazy"
+          decoding="async"
+          referrerpolicy="no-referrer"
+          onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 72 72%22><defs><linearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22><stop offset=%220%25%22 stop-color=%22%2360a5fa%22/><stop offset=%22100%25%22 stop-color=%22%233b82f6%22/></linearGradient></defs><circle cx=%2236%22 cy=%2236%22 r=%2234%22 fill=%22url(%23g)%22/><circle cx=%2236%22 cy=%2236%22 r=%2231%22 fill=%22rgba(255,255,255,0.12)%22/><text x=%2236%22 y=%2244%22 font-size=%2230%22 font-family=%22Arial,sans-serif%22 text-anchor=%22middle%22 fill=%22white%22 font-weight=%22700%22>U</text></svg>';"
+        />
+      </div>
+      <button id="logout-btn" type="button">Logout</button>
     </div>
-    <button id="logout-btn" style="width: 100px; height: 30px; background-color: chocolate; position: absolute; right: 20px; padding: 0px 20px; margin: 0;">Logout</button>
   </div>
-  <hr/>
-  <button id="delete-btn" style="width: 100px;">Delete</button>
-  {{ range .Files }}
-  <p onclick="checkBox(event)" class="hover-effect">
-    <input type="checkbox" name="fileIds" class="fileCheckbox" value="{{.ID}}" style="width: 20px;"/>
-    {{ if (eq .UnitType 1) }}
-    <a href="{{$.DocHost}}/?unit={{.UnitId}}&type=1">{{.Name}}.docx</a>
-    {{ else if (eq .UnitType 2) }}
-    <a href="{{$.SheetHost}}/?unit={{.UnitId}}&type=2">{{.Name}}.xlsx</a>
-    {{ end }}
-    <label>{{.UpdatedAt}}</label>
-    <a href="/file/export?fileId={{.ID}}" style="margin: 0 10px;">export</a>
-    <button style="width: 70px; position: absolute; padding: 0px 20px; height: 20px; margin: 0;" onclick="showDialog(event)" fileId="{{.ID}}">Invite</button>
-  </p>
-  {{ end }}
-</div>
 
-<dialog id="dialog" style="width: 300px;">
-  <div id="dialog-msg"></div>
-  <hr>
-  <span style="margin-right: 10px;">Role</span>
-  <select id="select-role" style="width: 100px; height: 20px;">
-    <option value="reader">Reader</option>
-    <option value="editor">Editor</option>
-  </select>
-  <button id="dialog-ok-btn">OK</button>
-  <button id="dialog-cancel-btn" style="background-color: darkgray;">Cancel</button>
-</dialog>
+  <div class="demo-actions">
+    <button id="new-btn" class="demo-btn-primary" type="button">+ New File</button>
+    <button id="import-btn" class="demo-btn-secondary" type="button">Import File</button>
+    <button id="delete-btn" class="demo-btn-danger" type="button">Delete Selected</button>
+  </div>
 
+  <input type="file" id="file" style="display: none;"/>
+
+  <div id="div-form" class="demo-card">
+    <form id="form" action="" method="post" enctype="multipart/form-data">
+      <label><b>Name</b></label>
+      <input type="text" placeholder="Enter Name" name="name" required>
+
+      <label><b>Type</b></label>
+      <div class="form-row">
+        <label><input type="radio" name="type" value="doc" checked>doc</label>
+        <label><input type="radio" name="type" value="sheet">sheet</label>
+      </div>
+
+      <div class="form-actions">
+        <button id="form-new-btn" class="demo-btn-primary" type="submit">Create</button>
+        <button id="form-cancel-btn" class="demo-btn-secondary" type="button">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-list-head">
+      <h2>File list</h2>
+    </div>
+
+    <div class="file-list">
+      {{ range .Files }}
+      <div onclick="checkBox(event)" class="file-row hover-effect">
+        <input type="checkbox" name="fileIds" class="fileCheckbox file-check" value="{{.ID}}"/>
+        <div class="file-name">
+          {{ if (eq .UnitType 1) }}
+          <a href="{{$.DocHost}}/?unit={{.UnitId}}&type=1">{{.Name}}.docx</a>
+          {{ else if (eq .UnitType 2) }}
+          <a href="{{$.SheetHost}}/?unit={{.UnitId}}&type=2">{{.Name}}.xlsx</a>
+          {{ end }}
+        </div>
+        <label class="file-updated">{{.UpdatedAt}}</label>
+        <div class="file-actions">
+          <a href="/file/export?fileId={{.ID}}">Export</a>
+          <button class="demo-btn-secondary" type="button" onclick="showDialog(event)" fileId="{{.ID}}">Invite</button>
+        </div>
+      </div>
+      {{ end }}
+    </div>
+  </div>
+
+  <dialog id="dialog" class="dialog-panel">
+    <div id="dialog-msg"></div>
+    <hr>
+    <span style="margin-right: 10px;">Role</span>
+    <select id="select-role" style="width: 120px; display: inline-block; margin-bottom: 0;">
+      <option value="reader">Reader</option>
+      <option value="editor">Editor</option>
+    </select>
+    <div class="dialog-actions">
+      <button id="dialog-ok-btn" class="demo-btn-primary" type="button">OK</button>
+      <button id="dialog-cancel-btn" class="demo-btn-secondary" type="button">Cancel</button>
+    </div>
+  </dialog>
 </div>
 
 <div id="loading" style="visibility: hidden;">
@@ -71,14 +92,18 @@
 
 <script type="text/javascript">
   function checkBox(event) {
-    let target = event.target.querySelector('.fileCheckbox');
-    if (target) {
+    if (event.target.closest('.file-actions') || event.target.matches('a') || event.target.matches('button')) {
+      return;
+    }
+    let row = event.currentTarget;
+    let target = row.querySelector('.fileCheckbox');
+    if (target && !event.target.matches('input[type="checkbox"]')) {
       target.checked = !target.checked;
     }
   }
 
   document.getElementById("new-btn").addEventListener('click', function() {
-    document.getElementById('div-form').style.visibility = 'visible';
+    document.getElementById('div-form').classList.add('is-visible');
   });
 
   document.getElementById("import-btn").addEventListener('click', function() {
@@ -134,7 +159,7 @@
   });
 
   document.getElementById("form-cancel-btn").addEventListener('click', function() {
-    document.getElementById('div-form').style.visibility = 'hidden';
+    document.getElementById('div-form').classList.remove('is-visible');
     document.getElementById('form').onsubmit = function() { return false; };
   });
 
@@ -172,24 +197,21 @@
   var inviteFileId = 0;
 
   function showPeople(data) {
-    console.log(data);
     let people = data.users;
     let dialogMsg = document.getElementById('dialog-msg');
     dialogMsg.innerHTML = '';
     people.forEach(person => {
       let div = document.createElement('div');
-      div.style.display = 'flex';
-      div.style.justifyContent = 'space-between';
-      div.className= 'hover-effect';
+      div.className = 'dialog-people-row';
       let span = document.createElement('span');
       span.innerText = person.nickname;
       let checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
-      checkbox.value = person.user_id; 
+      checkbox.value = person.user_id;
       checkbox.className = 'inviteCheckbox';
       checkbox.checked = invite.includes(person.user_id);
       checkbox.onchange = function() {
-        if (checkbox.checked && checkBox.value !== currentUserId) {
+        if (checkbox.checked && checkbox.value !== currentUserId) {
           invite.push(checkbox.value);
         } else {
           invite = invite.filter(id => id !== checkbox.value);
@@ -202,8 +224,8 @@
       div.onclick = function() {
         checkbox.click();
       };
-      div.appendChild(checkbox);
       div.appendChild(span);
+      div.appendChild(checkbox);
       dialogMsg.appendChild(div);
     });
     if (pageStack.length>1 || data.next != 0) {
@@ -257,7 +279,7 @@
   document.getElementById("dialog-cancel-btn").addEventListener('click', function() {
     document.getElementById('dialog').close();
   });
-  
+
   document.getElementById("dialog-ok-btn").addEventListener('click', function() {
     fetch('/file/join', {
       method: 'POST',
@@ -279,23 +301,3 @@
     });
   });
 </script>
-
-<style>
-  .hover-effect {
-    transition: background-color 0.3s;
-  }
-
-  .hover-effect:hover {
-    background-color: lightgrey;
-  }
-
-  .div-image {
-    width: 40px; 
-    height: 40px;
-    border: 2px solid #3498db; 
-    border-radius: 50%; 
-    overflow: hidden; 
-    display: flex;
-    padding: 0;
-  }
-</style>
