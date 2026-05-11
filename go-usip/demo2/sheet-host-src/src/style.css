@@ -36,8 +36,33 @@ body {
   height: 100%;
 }
 
-#univer {
+.sheet-shell {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-toolbar {
+  height: 46px;
+  flex: 0 0 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid var(--line);
+  box-sizing: border-box;
+}
+
+.sheet-toolbar-left {
+  font-size: 13px;
+  color: var(--text-subtle);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+#univer {
+  height: calc(100% - 46px);
 }
 
 .auth-shell {
@@ -294,7 +319,7 @@ body {
 .file-row {
   display: grid;
   gap: 10px;
-  grid-template-columns: 24px minmax(180px, 1fr) 180px auto;
+  grid-template-columns: 24px minmax(180px, 1fr) 90px 180px auto;
   align-items: center;
   padding: 11px;
   border-radius: var(--radius-md);
@@ -320,6 +345,33 @@ body {
 .file-updated {
   color: var(--text-subtle);
   font-size: 13px;
+}
+
+.file-role-badge {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.file-role-badge.role-owner {
+  background: #e8f0ff;
+  color: #1d54d7;
+}
+
+.file-role-badge.role-editor {
+  background: #e9f8ef;
+  color: #1b8a4b;
+}
+
+.file-role-badge.role-reader {
+  background: #f1f3f8;
+  color: #5b6b85;
 }
 
 .file-actions {
@@ -415,6 +467,77 @@ body {
   height: 16px;
 }
 
+.dialog-pagination {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dialog-page-btn {
+  border: 1px solid #d6e3ff;
+  background: #edf3ff;
+  color: #214fba;
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.members-dialog {
+  width: min(560px, calc(100% - 24px));
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fbfdff;
+  padding: 8px;
+}
+
+.members-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 10px;
+}
+
+.members-row:hover {
+  background: #eef4ff;
+}
+
+.members-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.members-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #d6e3ff;
+}
+
+.members-name {
+  font-size: 14px;
+}
+
+.members-empty {
+  margin: 8px;
+  color: var(--text-subtle);
+  font-size: 13px;
+}
+
 @media (max-width: 760px) {
   #list-page {
     padding: 12px;
@@ -429,6 +552,7 @@ body {
     grid-template-columns: 24px minmax(120px, 1fr);
   }
 
+  .file-role-badge,
   .file-updated,
   .file-actions {
     grid-column: 2;

@@ -23,6 +23,7 @@ type fileItemResp struct {
 	Name      string `json:"name"`
 	UnitId    string `json:"unitId"`
 	UnitType  int    `json:"unitType"`
+	Role      string `json:"role"`
 	UpdatedAt string `json:"updatedAt"`
 	OpenURL   string `json:"openUrl"`
 	ExportURL string `json:"exportUrl"`
@@ -54,8 +55,19 @@ func (c *FilesAPIController) Get() mvc.Result {
 			Name:      file.Name,
 			UnitId:    file.UnitId,
 			UnitType:  file.UnitType,
+			Role:      string(datamodels.RoleReader),
 			UpdatedAt: file.UpdatedAt.Format("2006-01-02 15:04:05"),
 			ExportURL: "/file/export?fileId=" + strconv.Itoa(int(file.ID)),
+		}
+
+		collaborators, found := c.Service.GetCollaborators(file.ID)
+		if found {
+			for _, collaborator := range collaborators {
+				if collaborator.UserId == userID && collaborator.Role != "" {
+					item.Role = string(collaborator.Role)
+					break
+				}
+			}
 		}
 
 		if file.UnitType == datamodels.UnitTypeSheet {
