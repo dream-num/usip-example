@@ -85,18 +85,21 @@ func main() {
 	// sure that your code is aligned with the Iris' MVC Architecture.
 	app.Logger().SetLevel("debug")
 
-	// Load the template files.
-	tmpl := iris.HTML("./web/views", ".html").
-		Layout("shared/layout.html").
-		Reload(true)
-	app.RegisterView(tmpl)
-
 	app.HandleDir("/public", iris.Dir("./web/public"))
 	app.HandleDir("/sheet", iris.Dir("./web/public/sheet-host"))
 	app.Get("/sheet", func(ctx iris.Context) {
 		ctx.ServeFile("./web/public/sheet-host/index.html")
 	})
 	app.Get("/sheet/", func(ctx iris.Context) {
+		ctx.ServeFile("./web/public/sheet-host/index.html")
+	})
+	app.Get("/login", func(ctx iris.Context) {
+		ctx.ServeFile("./web/public/sheet-host/index.html")
+	})
+	app.Get("/register", func(ctx iris.Context) {
+		ctx.ServeFile("./web/public/sheet-host/index.html")
+	})
+	app.Get("/files", func(ctx iris.Context) {
 		ctx.ServeFile("./web/public/sheet-host/index.html")
 	})
 
@@ -109,12 +112,14 @@ func main() {
 	app.Any("/universer-api/{path:path}", iris.FromStd(universerProxy))
 
 	app.OnAnyErrorCode(func(ctx iris.Context) {
-		ctx.ViewData("Message", ctx.Values().
-			GetStringDefault("message", "The page you're looking for doesn't exist"))
-		if err := ctx.View("shared/error.html"); err != nil {
-			ctx.HTML("<h3>%s</h3>", err.Error())
-			return
-		}
+		message := ctx.Values().GetStringDefault("message", "The page you're looking for doesn't exist")
+		ctx.StopWithJSON(ctx.GetStatusCode(), iris.Map{
+			"error":   message,
+			"status":  ctx.GetStatusCode(),
+			"path":    ctx.Path(),
+			"method":  ctx.Method(),
+			"request": ctx.GetID(),
+		})
 	})
 
 	// ---- Serve our controllers. ----
@@ -189,6 +194,20 @@ func main() {
 	)
 	file.Handle(new(controllers.FileController))
 
+	authAPI := mvc.New(app.Party("/api/auth"))
+	authAPI.Register(
+		userService,
+		sessManager.Start,
+	)
+	authAPI.Handle(new(controllers.AuthAPIController))
+
+	filesAPI := mvc.New(app.Party("/api/files"))
+	filesAPI.Register(
+		fileService,
+		sessManager.Start,
+	)
+	filesAPI.Handle(new(controllers.FilesAPIController))
+
 	usip := mvc.New(app.Party("/usip"))
 	usip.Register(
 		userService,
@@ -202,7 +221,7 @@ func main() {
 	cors.Handle(new(controllers.CorsController))
 
 	app.Handle("GET", "/", func(ctx iris.Context) {
-		ctx.Redirect("/file/list", iris.StatusFound)
+		ctx.Redirect("/files", iris.StatusFound)
 	})
 
 	port, portSource, err := resolvePort()

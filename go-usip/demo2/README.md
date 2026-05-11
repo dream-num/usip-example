@@ -3,7 +3,11 @@
 Contain:
 - Account System: register, login, logout, session
 - File System: create, list, open
-- Embedded sheet host (`/sheet`) served by this project
+- Unified frontend runtime from `sheet-host-src` for:
+  - `/login`
+  - `/register`
+  - `/files`
+  - `/sheet`
 - Sheet-only mode: no `docHost` or doc/docx open flow
 
 Dependencies:
@@ -21,7 +25,7 @@ bash -c "$(curl -fsSL https://get.univer.ai)"
 
 ## Embedded sheet host assets
 
-This project now serves sheet host at `/sheet` from `web/public/sheet-host`.
+This project serves frontend assets from `web/public/sheet-host`.
 
 The editable source workspace is in `sheet-host-src/`.
 
@@ -44,8 +48,7 @@ If you still want to refresh assets from external `univer-pro-sheet-start-kit` d
 make sync-sheet-host SOURCE=/absolute/path/to/univer-pro-sheet-start-kit/dist
 ```
 
-The sync command also rewrites `index.html` asset links to `/sheet/...` paths to avoid `main.js` 404 when opening `/sheet?unit=...`.
-
+The sync command rewrites `index.html` asset links to `/sheet/...` paths.
 
 ## Run
 
@@ -82,11 +85,41 @@ go mod tidy
    REDIS_ENABLED=false go run .
    ```
 
-   
 3. run web server
 ```shell
 go run .
 ```
+
+## Routes
+
+Frontend pages:
+- `GET /login`
+- `GET /register`
+- `GET /files`
+- `GET /sheet` (supports `?unit=<unitID>&type=2`)
+
+Compatibility redirects:
+- `/user/login` -> `/login`
+- `/user/register` -> `/register`
+- `/file/list` -> `/files`
+
+## APIs
+
+Auth JSON APIs:
+- `POST /api/auth/login`
+- `POST /api/auth/register`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+
+Files JSON API:
+- `GET /api/files`
+
+Legacy file APIs (reused by files page):
+- `POST /file/new`
+- `POST /file/import`
+- `GET /file/export?fileId=<id>`
+- `DELETE /file?fileIds=<id>&fileIds=<id2>`
+- `POST /file/join`
 
 ## Display
 <image src="./doc/image.png" />

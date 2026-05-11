@@ -20,12 +20,8 @@ type CorsController struct {
 }
 
 func (c *CorsController) GetPage() mvc.Result {
-	view := mvc.View{
-		Name: "cors/test.html",
-		Data: iris.Map{
-			"Host": viper.GetString("universer.host"),
-		},
-	}
-
-	return view
+	c.Ctx.JSON(iris.Map{
+		"host": viper.GetString("universer.host"),
+	})
+	return nil
 }

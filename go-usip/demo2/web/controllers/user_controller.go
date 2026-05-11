@@ -18,7 +18,6 @@ import (
 // POST 			/user/register
 // GET 				/user/login
 // POST 			/user/login
-// GET 				/user/me
 // All HTTP Methods /user/logout
 type UserController struct {
 	// context is auto-binded by Iris on each request,
@@ -40,18 +39,9 @@ func (c *UserController) logout() {
 	c.Session.Destroy()
 }
 
-var registerStaticView = mvc.View{
-	Name: "user/register.html",
-	Data: iris.Map{"Title": "User Registration"},
-}
-
 // GetRegister handles GET: http://localhost:8080/user/register.
 func (c *UserController) GetRegister() mvc.Result {
-	if _, ok := isLoggedIn(c.Session); ok {
-		c.logout()
-	}
-
-	return registerStaticView
+	return mvc.Response{Path: "/register"}
 }
 
 // PostRegister handles POST: http://localhost:8080/user/register.
@@ -77,8 +67,8 @@ func (c *UserController) PostRegister() mvc.Result {
 	return mvc.Response{
 		// if not nil then this error will be shown instead.
 		Err: err,
-		// redirect to /user/me.
-		Path: "/file/list",
+		// redirect to files page.
+		Path: "/files",
 		// When redirecting from POST to GET request you -should- use this HTTP status code,
 		// however there're some (complicated) alternatives if you
 		// search online or even the HTTP RFC.
@@ -88,19 +78,9 @@ func (c *UserController) PostRegister() mvc.Result {
 	}
 }
 
-var loginStaticView = mvc.View{
-	Name: "user/login.html",
-	Data: iris.Map{"Title": "User Login"},
-}
-
 // GetLogin handles GET: http://localhost:8080/user/login.
 func (c *UserController) GetLogin() mvc.Result {
-	if _, ok := isLoggedIn(c.Session); ok {
-		// if it's already logged in then destroy the previous session.
-		c.logout()
-	}
-
-	return loginStaticView
+	return mvc.Response{Path: "/login"}
 }
 
 // PostLogin handles POST: http://localhost:8080/user/register.
@@ -114,41 +94,20 @@ func (c *UserController) PostLogin() mvc.Result {
 
 	if !found {
 		return mvc.Response{
-			Path: "/user/register",
+			Path: "/register",
 		}
 	}
 
 	c.Session.Set(userIDKey, u.UserId)
 
 	return mvc.Response{
-		Path: "/file/list",
+		Path: "/files",
 	}
 }
 
 // GetMe handles GET: http://localhost:8080/user/me.
 func (c *UserController) GetMe() mvc.Result {
-	userId, ok := isLoggedIn(c.Session)
-	if !ok {
-		// if it's not logged in then redirect user to the login page.
-		return mvc.Response{Path: "/user/login"}
-	}
-
-	u, found := c.Service.GetByID(userId)
-	if !found {
-		// if the  session exists but for some reason the user doesn't exist in the "database"
-		// then logout and re-execute the function, it will redirect the client to the
-		// /user/login page.
-		c.logout()
-		return c.GetMe()
-	}
-
-	return mvc.View{
-		Name: "user/me.html",
-		Data: iris.Map{
-			"Title": "Profile of " + u.Username,
-			"User":  u,
-		},
-	}
+	return mvc.Response{Path: "/files"}
 }
 
 // AnyLogout handles All/Any HTTP Methods for: http://localhost:8080/user/logout.
@@ -157,14 +116,14 @@ func (c *UserController) AnyLogout() {
 		c.logout()
 	}
 
-	c.Ctx.Redirect("/user/login")
+	c.Ctx.Redirect("/login")
 }
 
 func (c *UserController) GetPeople() mvc.Result {
 	_, ok := isLoggedIn(c.Session)
 	if !ok {
 		// if it's not logged in then redirect user to the login page.
-		return mvc.Response{Path: "/user/login"}
+		return mvc.Response{Path: "/login"}
 	}
 
 	nextId := c.Ctx.URLParamIntDefault("next", 0)

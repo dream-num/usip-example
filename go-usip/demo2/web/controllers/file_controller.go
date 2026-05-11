@@ -28,27 +28,9 @@ type FileController struct {
 }
 
 func (c *FileController) GetList() mvc.Result {
-	userId, ok := isLoggedIn(c.Session)
-	if !ok {
-		return mvc.Response{
-			Code: iris.StatusUnauthorized,
-			Path: "/user/login",
-		}
+	return mvc.Response{
+		Path: "/files",
 	}
-
-	host := c.Ctx.Host()
-
-	files, _ := c.Service.GetByUserId(userId)
-	view := mvc.View{
-		Name: "file/list.html",
-		Data: iris.Map{
-			"UserId":    userId,
-			"Files":     files,
-			"SheetHost": getUnitHost(viper.GetString("univer.sheetHost"), host),
-		},
-	}
-
-	return view
 }
 
 func (c *FileController) PostNew() mvc.Result {
@@ -56,7 +38,7 @@ func (c *FileController) PostNew() mvc.Result {
 	if !ok {
 		return mvc.Response{
 			Code: iris.StatusUnauthorized,
-			Path: "/user/login",
+			Path: "/login",
 		}
 	}
 
@@ -77,7 +59,7 @@ func (c *FileController) PostNew() mvc.Result {
 
 	host := c.Ctx.Host()
 
-	path := "/file/list"
+	path := "/files"
 	switch datamodels.FileTypeInt(unitType) {
 	case datamodels.UnitTypeSheet:
 		path = getUnitHost(viper.GetString("univer.sheetHost"), host) + "/?type=2&unit=" + file.UnitId
@@ -94,6 +76,7 @@ func (c *FileController) PostImport() mvc.Result {
 	if !ok {
 		return mvc.Response{
 			Code: iris.StatusUnauthorized,
+			Path: "/login",
 		}
 	}
 
@@ -123,7 +106,7 @@ func (c *FileController) PostImport() mvc.Result {
 
 	host := c.Ctx.Host()
 
-	path := "/file/list"
+	path := "/files"
 	switch unitType {
 	case datamodels.UnitTypeSheet:
 		path = getUnitHost(viper.GetString("univer.sheetHost"), host) + "/?type=2&unit=" + file.UnitId
