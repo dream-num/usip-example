@@ -4,6 +4,9 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -55,6 +58,21 @@ func resolveRedisEnabled() (enabled bool, source string, err error) {
 	return viper.GetBool("redis.enabled"), "config:redis.enabled", nil
 }
 
+func newUniverserProxy(target string) (*httputil.ReverseProxy, error) {
+	targetURL, err := url.Parse(strings.TrimSpace(target))
+	if err != nil {
+		return nil, err
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(targetURL)
+	originalDirector := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		originalDirector(req)
+		req.Host = targetURL.Host
+	}
+	return proxy, nil
+}
+
 func main() {
 	viper.SetConfigFile("./configs/config.yaml") // the config file path
 	err := viper.ReadInConfig()
@@ -74,6 +92,21 @@ func main() {
 	app.RegisterView(tmpl)
 
 	app.HandleDir("/public", iris.Dir("./web/public"))
+	app.HandleDir("/sheet", iris.Dir("./web/public/sheet-host"))
+	app.Get("/sheet", func(ctx iris.Context) {
+		ctx.ServeFile("./web/public/sheet-host/index.html")
+	})
+	app.Get("/sheet/", func(ctx iris.Context) {
+		ctx.ServeFile("./web/public/sheet-host/index.html")
+	})
+
+	universerProxy, err := newUniverserProxy(viper.GetString("universer.host"))
+	if err != nil {
+		app.Logger().Fatalf("invalid universer.host for proxy: %v", err)
+		return
+	}
+	app.Any("/universer-api", iris.FromStd(universerProxy))
+	app.Any("/universer-api/{path:path}", iris.FromStd(universerProxy))
 
 	app.OnAnyErrorCode(func(ctx iris.Context) {
 		ctx.ViewData("Message", ctx.Values().
@@ -102,9 +135,9 @@ func main() {
 	fileService := services.NewFileService(fileRepo, fileCollaRepo, universerService)
 
 	sessManager := sessions.New(sessions.Config{
-		Cookie:                     "_on-premise",
-		Expires:                    7 * 24 * time.Hour,
-		AllowReclaim:               true,
+		Cookie:                      "_on-premise",
+		Expires:                     7 * 24 * time.Hour,
+		AllowReclaim:                true,
 		DisableSubdomainPersistence: true,
 	})
 

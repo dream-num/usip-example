@@ -1,6 +1,6 @@
-host: http://localhost:8080
+host: http://localhost:8090
 server:
-  port: 8080
+  port: 8090
 
 database:
   driver: sqlite
@@ -14,7 +14,6 @@ universer:
   host: http://localhost:8000
 
 univer:
-  docHost: http://localhost:3010/doc
-  sheetHost: http://localhost:3010/sheet
+  sheetHost: /sheet
 
 font: web/public/font/SourceHanSansCN-VF.ttf

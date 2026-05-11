@@ -1,0 +1,39 @@
+{
+  "name": "demo2-sheet-host-src",
+  "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Embedded sheet host source workspace for go-usip/demo2",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "build:pkg": "pnpm build && cd .github/server && pnpm build:pkg",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "dependencies": {
+    "@univerjs/action-recorder": "0.22.0",
+    "@univerjs/presets": "0.22.0",
+    "@univerjs/sheets-crosshair-highlight": "0.22.0",
+    "@univerjs/sheets-zen-editor": "0.22.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^6.1.0",
+    "@types/node": "^25.5.0",
+    "eslint": "^9.38.0",
+    "eslint-plugin-format": "^1.0.2",
+    "lint-staged": "^16.4.0",
+    "simple-git-hooks": "^2.13.1",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.19"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm lint-staged"
+  },
+  "lint-staged": {
+    "*": "eslint --fix"
+  }
+}

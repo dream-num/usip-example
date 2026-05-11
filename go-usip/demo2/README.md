@@ -3,6 +3,8 @@
 Contain:
 - Account System: register, login, logout, session
 - File System: create, list, open
+- Embedded sheet host (`/sheet`) served by this project
+- Sheet-only mode: no `docHost` or doc/docx open flow
 
 Dependencies:
 
@@ -16,6 +18,33 @@ Install univer server and demo
 ```shell
 bash -c "$(curl -fsSL https://get.univer.ai)"
 ```
+
+## Embedded sheet host assets
+
+This project now serves sheet host at `/sheet` from `web/public/sheet-host`.
+
+The editable source workspace is in `sheet-host-src/`.
+
+Install and build from in-repo source:
+
+```shell
+make install-sheet-host
+make build-sheet-host
+```
+
+For frontend dev server:
+
+```shell
+make dev-sheet-host
+```
+
+If you still want to refresh assets from external `univer-pro-sheet-start-kit` dist, run:
+
+```shell
+make sync-sheet-host SOURCE=/absolute/path/to/univer-pro-sheet-start-kit/dist
+```
+
+The sync command also rewrites `index.html` asset links to `/sheet/...` paths to avoid `main.js` 404 when opening `/sheet?unit=...`.
 
 
 ## Run
@@ -31,6 +60,12 @@ go mod tidy
    - `server.port`: default listen port (default `8090`)
    - `redis.enabled`: enable redis-backed session store (default `true`)
    - `redis.addr`: required when `redis.enabled=true`
+   - `univer.sheetHost`: defaults to `/sheet` (embedded route in this project)
+   - `universer.host`: backend target for `/universer-api` proxy (default `http://localhost:8000`)
+
+   Breaking behavior:
+   - `docHost` is removed from demo2 configuration.
+   - New/Open/Import flow in demo2 supports sheet only (`.xlsx` import).
 
    Port priority at runtime:
    - `PORT` environment variable

@@ -15,7 +15,15 @@ func isLoggedIn(session *sessions.Session) (string, bool) {
 
 func getUnitHost(v, host string) string {
 	if strings.HasPrefix(v, ":") {
-		return host + v
+		baseHost := host
+		if idx := strings.Index(baseHost, ":"); idx > -1 {
+			baseHost = baseHost[:idx]
+		}
+		return "http://" + baseHost + v
+	}
+
+	if strings.HasPrefix(v, "/") {
+		return "http://" + host + v
 	}
 
 	return v

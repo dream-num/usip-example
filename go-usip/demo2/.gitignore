@@ -2,3 +2,5 @@
 bin/
 
 *.db
+sheet-host-src/node_modules/
+web/public/sheet-host/

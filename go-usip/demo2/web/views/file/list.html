@@ -34,8 +34,7 @@
 
       <label><b>Type</b></label>
       <div class="form-row">
-        <label><input type="radio" name="type" value="doc" checked>doc</label>
-        <label><input type="radio" name="type" value="sheet">sheet</label>
+        <label><input type="radio" name="type" value="sheet" checked>sheet</label>
       </div>
 
       <div class="form-actions">
@@ -55,9 +54,7 @@
       <div onclick="checkBox(event)" class="file-row hover-effect">
         <input type="checkbox" name="fileIds" class="fileCheckbox file-check" value="{{.ID}}"/>
         <div class="file-name">
-          {{ if (eq .UnitType 1) }}
-          <a href="{{$.DocHost}}/?unit={{.UnitId}}&type=1">{{.Name}}.docx</a>
-          {{ else if (eq .UnitType 2) }}
+          {{ if (eq .UnitType 2) }}
           <a href="{{$.SheetHost}}/?unit={{.UnitId}}&type=2">{{.Name}}.xlsx</a>
           {{ end }}
         </div>
@@ -117,17 +114,11 @@
     formData.append('size', file.size);
     let type = file.name.split('.').pop().toLowerCase();
     switch (type) {
-      case 'doc':
-        formData.append('type', 'doc');
-        break;
-      case 'docx':
-        formData.append('type', 'doc');
-        break;
       case 'xlsx':
         formData.append('type', 'sheet');
         break;
       default:
-        alert('Invalid file type');
+        alert('Only .xlsx import is supported');
         return;
     }
     formData.append('name', file.name.split('.')[0]);
