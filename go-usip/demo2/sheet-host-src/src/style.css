@@ -445,6 +445,15 @@ body {
   background: #eef4ff;
 }
 
+.dialog-people-row-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dialog-people-row-disabled:hover {
+  background: transparent;
+}
+
 .dialog-people-dot {
   width: 28px;
   height: 28px;
@@ -465,6 +474,10 @@ body {
 .inviteCheckbox {
   width: 16px;
   height: 16px;
+}
+
+.inviteCheckbox:disabled {
+  cursor: not-allowed;
 }
 
 .dialog-pagination {

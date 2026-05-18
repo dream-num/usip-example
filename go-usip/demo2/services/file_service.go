@@ -297,7 +297,7 @@ func (s *fileService) CheckPermission(req CheckPermissionReq) bool {
 	case ActionDelete:
 		return colla.Role == datamodels.RoleOwner
 	case ActionJoin:
-		return datamodels.RoleLever[colla.Role] >= datamodels.RoleLever[datamodels.RoleEditor]
+		return colla.Role == datamodels.RoleOwner
 	}
 
 	return false

@@ -1,6 +1,6 @@
 import { fetchPeople, inviteUsers } from '../services/files-service'
 
-export function wireInviteDialog(fileContainer: HTMLDivElement) {
+export function wireInviteDialog(fileContainer: HTMLDivElement, currentUserId: string) {
   const dialog = document.querySelector<HTMLDialogElement>('#dialog')
   const dialogMsg = document.querySelector<HTMLDivElement>('#dialog-msg')
   const roleSelect = document.querySelector<HTMLSelectElement>('#select-role')
@@ -18,8 +18,11 @@ export function wireInviteDialog(fileContainer: HTMLDivElement) {
     const data = await fetchPeople(next)
     dialogMsg.innerHTML = ''
     data.users.forEach((person) => {
+      const isCurrentUser = currentUserId !== '' && person.user_id === currentUserId
       const row = document.createElement('div')
       row.className = 'dialog-people-row'
+      if (isCurrentUser)
+        row.classList.add('dialog-people-row-disabled')
 
       const label = document.createElement('span')
       label.className = 'dialog-people-name'
@@ -34,8 +37,13 @@ export function wireInviteDialog(fileContainer: HTMLDivElement) {
       checkbox.className = 'inviteCheckbox'
       checkbox.value = person.user_id
       checkbox.checked = invite.includes(person.user_id)
+      checkbox.disabled = isCurrentUser
 
       checkbox.onchange = () => {
+        if (isCurrentUser) {
+          checkbox.checked = false
+          return
+        }
         if (checkbox.checked)
           invite = [...new Set([...invite, checkbox.value])]
         else
@@ -43,6 +51,8 @@ export function wireInviteDialog(fileContainer: HTMLDivElement) {
       }
 
       row.addEventListener('click', (event) => {
+        if (isCurrentUser)
+          return
         const target = event.target as HTMLElement
         if (target.closest('input[type="checkbox"]'))
           return
@@ -101,7 +111,13 @@ export function wireInviteDialog(fileContainer: HTMLDivElement) {
     if (!inviteFileId)
       return
 
-    await inviteUsers(inviteFileId, invite, roleSelect.value)
+    const filteredInvite = invite.filter(userId => userId !== currentUserId)
+    if (!filteredInvite.length) {
+      alert('Please select at least one user to invite')
+      return
+    }
+
+    await inviteUsers(inviteFileId, filteredInvite, roleSelect.value)
     dialog.close()
   })
 

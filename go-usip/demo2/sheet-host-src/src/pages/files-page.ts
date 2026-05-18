@@ -19,7 +19,7 @@ function renderFilesShell() {
     <div id="list-page">
       <div class="demo-topbar">
         <div class="demo-title">
-          <h1>Demo2 Files</h1>
+          <h1>Workspace</h1>
           <p>Fast file operations with a clean, modern workspace.</p>
         </div>
         <div class="demo-user">
@@ -96,7 +96,7 @@ function wireFileRowToggle(fileContainer: HTMLDivElement) {
   })
 }
 
-function wireCommonActions(fileContainer: HTMLDivElement) {
+function wireCommonActions(fileContainer: HTMLDivElement, currentUserId: string) {
   const logoutBtn = document.querySelector<HTMLButtonElement>('#logout-btn')
   const formWrap = document.querySelector<HTMLDivElement>('#div-form')
   const newBtn = document.querySelector<HTMLButtonElement>('#new-btn')
@@ -154,7 +154,7 @@ function wireCommonActions(fileContainer: HTMLDivElement) {
     location.reload()
   })
 
-  wireInviteDialog(fileContainer)
+  wireInviteDialog(fileContainer, currentUserId)
 }
 
 export async function renderFilesPage() {
@@ -178,7 +178,7 @@ export async function renderFilesPage() {
       <div class="file-actions">
         <button class="demo-btn-secondary members-btn" type="button" data-unit-id="${file.unitId}">Members</button>
         <a class="file-action-link" href="${file.exportUrl}">Export</a>
-        <button class="demo-btn-secondary invite-btn" type="button" data-file-id="${file.id}">Invite</button>
+        ${role === 'owner' ? `<button class="demo-btn-secondary invite-btn" type="button" data-file-id="${file.id}">Invite</button>` : ''}
       </div>
     </div>
   `
@@ -186,7 +186,7 @@ export async function renderFilesPage() {
 
   wireAvatar(filesResp.userId)
   wireFileRowToggle(fileContainer)
-  wireCommonActions(fileContainer)
+  wireCommonActions(fileContainer, filesResp.userId)
 
   fileContainer.querySelectorAll<HTMLButtonElement>('.members-btn').forEach((btn) => {
     btn.addEventListener('click', async () => {

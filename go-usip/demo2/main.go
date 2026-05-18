@@ -84,6 +84,15 @@ func main() {
 	// You got full debug messages, useful when using MVC and you want to make
 	// sure that your code is aligned with the Iris' MVC Architecture.
 	app.Logger().SetLevel("debug")
+	app.Use(func(ctx iris.Context) {
+		path := ctx.Path()
+		if strings.HasPrefix(path, "/sheet") || path == "/files" || path == "/login" || path == "/register" {
+			ctx.Header("Cache-Control", "no-store, no-cache, must-revalidate")
+			ctx.Header("Pragma", "no-cache")
+			ctx.Header("Expires", "0")
+		}
+		ctx.Next()
+	})
 
 	app.HandleDir("/public", iris.Dir("./web/public"))
 	app.HandleDir("/sheet", iris.Dir("./web/public/sheet-host"))
