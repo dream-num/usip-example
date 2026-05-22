@@ -22,9 +22,5 @@ func getUnitHost(v, host string) string {
 		return "http://" + baseHost + v
 	}
 
-	if strings.HasPrefix(v, "/") {
-		return "http://" + host + v
-	}
-
 	return v
 }

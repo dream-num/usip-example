@@ -6,4 +6,5 @@ bin/
 
 .codex/
 .playwright-cli/
+.debug/
 openspec/
